@@ -1,0 +1,103 @@
+utils:
+  enabled: true
+  echo:
+    enabled: true
+    ingress: 
+      enabled: false
+      tls:
+        # []
+        - hosts: [fiwaredsc-consumer.local]
+          secretName: wildcardlocal-tls
+      hosts: 
+        # []
+        ## provide a hosts and the paths that should be available     
+        - host: fiwaredsc-consumer.local
+        - path: /
+
+
+apisix:
+  enabled: true
+  # image:
+  #   registry: docker.io
+  #   repository: bitnami/apisix
+  #   tag: 3.11.0
+  #   digest: ""
+  # ingressController:
+  #   enabled: true
+  # # -- configuration in regard to the apisix etcd
+  etcd:
+    # -- should it be enabled
+    enabled: true
+    ## @param etcd.replicaCount Number of etcd replicas
+    ##
+    replicaCount: 1
+    # -- persistence configuration of etcd
+    persistence:
+  #     # -- should it be enabled
+  #     enabled: false
+  dashboard:
+    enabled: true
+    service:
+      # type: NodePort # Host exposes the NODEIP:PORT curl http://10.110.133.129:80
+      type: ClusterIP
+
+    ## @param dashboard.username APISIX Dashboard username
+    ##
+    username: user
+    ## @param dashboard.password APISIX Dashboard password
+    ##
+    # password: "123"
+    ## @param dashboard.existingSecret Name of a existing secret containing the password for APISIX Dashboard
+    existingSecret: apisix-dashboard-secrets
+    ## @param dashboard.existingSecretPasswordKey Key inside the secret containing the password for APISIX Dashboard
+    existingSecretPasswordKey: apisix-dashboard-secret
+  #   ## @param dashboard.defaultConfig [string] APISIX Dashboard configuration (evaluated as a template)
+  dataPlane:
+    ingress:
+      enabled: true
+      hostname: fiwaredsc-consumer.local
+      tls: true
+      extraHosts:
+        - name: fiwaredsc-consumer.local
+          path: /
+        - name: fiwaredsc-api6dashboard.local
+          path: /
+      extraTls:
+        - hosts: [fiwaredsc-consumer.local, fiwaredsc-api6dashboard.local]
+          secretName: wildcardlocal-tls
+    extraConfig:
+      deployment:
+        # https://apisix.apache.org/docs/apisix/deployment-modes/
+        role_data_plane:
+        #   # Decoupled
+        #   # In the decoupled deployment mode the data_plane and control_plane instances of APISIX are deployed 
+        #   # separately, i.e., one instance of APISIX is configured to be a data plane and the other to be a control plane.
+          config_provider: etcd
+        # role_data_plane:
+        #   # Standalone
+        #   # The routing rules in the conf/apisix.yaml file are loaded into memory immediately after the APISIX 
+        # node service starts. And every time interval (default 1 second), will try to detect whether the file content is 
+        # updated, if there is an update, reload the rule.
+          # config_provider: yaml
+    extraVolumes:
+      - name: routes
+        configMap:
+          name: apisix-routes
+      - name: opa-config
+        configMap:
+          name: opa-config
+      - name: opa-lua
+        configMap:
+          name: opa-lua
+    extraVolumeMounts:
+      - name: routes
+        mountPath: /usr/local/apisix/conf/apisix.yaml
+        subPath: apisix.yaml
+      - name: opa-lua
+        mountPath: /usr/local/apisix/apisix/plugins/opa/helper.lua
+        subPath: helper.lua
+      - name: opa-lua
+        mountPath: /usr/local/apisix/apisix/plugins/opa.lua
+        subPath: opa.lua
+  controlPlane:
+    enabled: true

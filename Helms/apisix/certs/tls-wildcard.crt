@@ -1,0 +1,4 @@
+-----BEGIN CERTIFICATE-----
+TO BE GENERATED FOR EXAMPLE USING openssl COMMANDS:
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout Helms/apisix/certs/tls-wildcard.key -out Helms/apisix/certs/tls-wildcard.crt -subj "/CN=*.local"
+-----END CERTIFICATE-----

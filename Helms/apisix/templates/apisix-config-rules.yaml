@@ -1,0 +1,12 @@
+{{ if ((.Values.apisix).enabled) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: apisix-routes
+  namespace: {{ $.Release.Namespace | quote }}
+  labels:
+    {{ include "dsc.labels" . | nindent 4 }}
+data:
+  apisix.yaml: |
+{{ .Files.Get "apisix-routes.yaml" | indent 4 -}}
+{{- end }}

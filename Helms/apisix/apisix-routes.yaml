@@ -1,0 +1,18 @@
+routes:
+- 
+  uri: /*
+  host: fiwaredsc-api6dashboard.local
+  methods: 
+    - GET    
+    - POST
+    - PUT
+    - HEAD
+    - CONNECT
+    - OPTIONS
+    - PATCH
+    - DELETE
+  upstream:
+    type: roundrobin
+    nodes:
+      apisix-dashboard:80: 1
+#END

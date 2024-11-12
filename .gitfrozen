@@ -1,0 +1,2 @@
+./Helms/apisix/certs/tls-wildcard.crt
+./Helms/apisix/certs/tls-wildcard.key

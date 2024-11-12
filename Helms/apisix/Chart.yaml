@@ -1,0 +1,13 @@
+apiVersion: v2
+name: apisix
+description: Chart holder to deploy the apisix proxy
+
+type: application
+version: 0.0.1
+appVersion: "4.0.0"
+dependencies:
+  - name: apisix
+    condition: apisix.enabled
+    version: 3.5.2
+    repository: oci://registry-1.docker.io/bitnamicharts
+ 

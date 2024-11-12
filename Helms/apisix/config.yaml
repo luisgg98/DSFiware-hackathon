@@ -1,0 +1,20 @@
+name: apisix
+chart: 
+valueFile: values.yaml
+namespace: apisix
+
+# Apache Apisix (api6)
+# apisix-etcd-:
+#   http://apisix-etcd:2379/version
+# apisix-control-plane: Waits till the etcd
+#   https://apisix-control-plane:9180
+# apisix-data-plane: Waits till the control plane is available
+#    it waits till the curl --max-time 5 -k -I "https://apisix-control-plane:9180" returns info from server although it is an error code:
+#   HTTP/1.1 404 Not Found
+#   Server: openresty
+#   Date: Thu, 31 Oct 2024 15:38:14 GMT
+#   Content-Type: text/html; charset=utf-8
+#   Content-Length: 225
+#   Connection: keep-alive
+# To Create a route:
+# 1- Retrieve the ADMINTOKEN=$(kSecret-show -f admin-token plane-api -v)
