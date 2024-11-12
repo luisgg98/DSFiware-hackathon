@@ -1,6 +1,5 @@
-ADMINTOKEN=$(kSecret-show -f admin-token plane-api -v)
-IP_APISIXCONTROL=$(kGet -a svc control- -o yaml -v  | yq eval '.spec.clusterIP' -)
-
+ADMINTOKEN=$(kSecret-show -f admin-token -n apisix plane-api -v)
+IP_APISIXCONTROL=$(kGet -a svc control- -o yaml -v -n apisix | yq eval '.spec.clusterIP' -)
 
 ROUTE_DEMO_JSON='{
   "name": "hello",
@@ -36,8 +35,22 @@ ROUTE_API6DASHBOARD_JSON='{
 }'
 
 
+ROUTE_TIR_JSON='{
+  "name": "TIR",
+  "uri": "/*",
+  "host": "fiwaredsc-trustanchor.local",
+  "methods": ["GET", "POST", "PUT" ],
+  "upstream": {
+    "type": "roundrobin",
+    "nodes": {
+      "tir.trust-anchor.svc.cluster.local:8080": 1
+    }
+  }
+}'
+
+
 curl -i -X POST -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN" \
--d "$ROUTE_DEMO_JSON"
+-d "$ROUTE_TIR_JSON"
 # curl -i -X POST -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN" \
 # -d "$ROUTE_API6DASHBOARD_JSON"
 # Output similar to: {"key":"/apisix/routes/00000000000000000077","value":{"create_time":1731400093,

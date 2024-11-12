@@ -62,8 +62,12 @@ apisix:
           path: /
         - name: fiwaredsc-api6dashboard.local
           path: /
+        - name: fiwaredsc-trustanchor.local
+          path: /
       extraTls:
-        - hosts: [fiwaredsc-consumer.local, fiwaredsc-api6dashboard.local]
+        - hosts: [fiwaredsc-consumer.local, 
+                  fiwaredsc-api6dashboard.local,
+                  fiwaredsc-trustanchor.local]
           secretName: wildcardlocal-tls
     extraConfig:
       deployment:

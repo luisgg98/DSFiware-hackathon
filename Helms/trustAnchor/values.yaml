@@ -1,0 +1,145 @@
+utils:
+  enabled: true
+  echo:
+    enabled: false
+          
+# -- configuration to be shared between the trust-anchor components
+generatePasswords:
+  # -- should a password for the database connection of trust-anchor components be generated in the cluster
+  enabled: true
+  #-- name of the secret to put the generated password into
+  secretName: mysql-database-secret
+  # ThisPasswordShouldNeverBeUsedAtProduction. JustRemoveThis key. One willBeDeployed
+  mySqlRootKey: mysql-root-password
+  mySqlRootPassword: "ThisPasswordShouldNeverBeUsedAtProduction. WhenThisKeyIsNotProvided, ARandomOnewillBeGenerated"
+
+# -- configuration for the mysql to be deployed as part of the trust-anchor, see https://github.com/bitnami/charts/tree/main/bitnami/mysql for all options
+mysql:
+  # -- should it be enabled? set to false if one outside the chart is used.
+  enabled: true
+  # -- allows to set a fixed name for the services
+  fullnameOverride: trust-anchor-mysql
+  # -- configure authentication to mysql
+  # image:
+  #   repository: bitnami/mysql
+  #   # -- tag of the image to be used
+  #   tag: 8.4.1
+  auth:
+    # -- name of the secret to take the passowrds from
+    existingSecret: mysql-database-secret
+  initdbScripts:
+    create.sql: |
+      CREATE DATABASE tir_db;
+  primary:
+    startupProbe:
+      enabled: false
+    livenessProbe:
+      enabled: false
+    resources:
+      requests:
+        cpu: 1
+        memory: 1024Mi
+      limits:
+        cpu: 2
+        memory: 2048Mi
+    persistence:
+      size: 2Gi
+      accessModes: 
+      - ReadWriteOnce
+
+# -- configuration for the trusted-issuers-list to be deployed as part of the trust-anchor, see https://github.com/FIWARE/helm-charts/tree/main/charts/trusted-issuers-list for all options
+trusted-issuers-list:
+  enabled: true
+  fullnameOverride: tir
+  # deployment:
+  # image:
+  #   repository: quay.io/fiware/trusted-issuers-list
+  #   # -- tag of the image to be used
+  #   tag: 0.2.1
+  # -- connection to the database
+  database:
+    # -- should persistence be used?
+    persistence: true
+    # -- name of the db user
+    username: root
+    # -- configuration for the existing secret to get the passwords from
+    existingSecret:
+      enabled: true
+      name: mysql-database-secret
+      key: mysql-root-password
+    # -- host of the database
+    host: trust-anchor-mysql
+    # -- name of the DB inside the SQL Server
+    name: tir_db
+  ingress:
+    # -- route config for the trusted issuers list endpoint
+    til:
+      # -- should there be an ingress to connect til with the public internet
+      enabled: false
+      # -- annotations to be added to the ingress
+      annotations:
+        {}
+        # kubernetes.io/ingress.class: "ambassador"
+        ## example annotations, allowing cert-manager to automatically create tls-certs and forcing everything to use ssl.
+        # kubernetes.io/tls-acme: "true"
+        # ingress.kubernetes.io/ssl-redirect: "true"
+      # -- all hosts to be provided
+      hosts:
+        # []
+        ## provide a hosts and the paths that should be available
+        - host: verifiabledr-til.ita.es
+      # -- configure the ingress' tls
+      tls:
+        # []
+        - hosts: [verifiabledr-til.ita.es]
+          secretName: secret.ita.es-tls
+    # -- route config for the trusted issuers registry endpoint
+    tir:
+      # -- should there be an ingress to connect til with the public internet
+      enabled: false
+      # -- annotations to be added to the ingress
+      annotations:
+        {}
+        # kubernetes.io/ingress.class: "ambassador"
+        ## example annotations, allowing cert-manager to automatically create tls-certs and forcing everything to use ssl.
+        # kubernetes.io/tls-acme: "true"
+        # ingress.kubernetes.io/ssl-redirect: "true"
+      # -- all hosts to be provided
+      hosts:
+        # []
+        ## provide a hosts and the paths that should be available
+        - host: verifiabledr-tir.ita.es
+      # -- configure the ingress' tls
+      tls:
+        - hosts: [verifiabledr-tir.ita.es]
+          secretName: secret.ita.es-tls
+
+
+## Configuration for the creation of initial TIL entries
+initData:
+  # -- should the creation of initial entries be enabled
+  initEnabled: false
+  # -- Annotation value for the Hook
+  hook: post-install,post-upgrade
+  # -- Number of retries before considering a Job as failed
+  backoffLimit: 1
+  # -- Array of trusted issuers to be created
+  issuers: []
+    #- name: issuer001
+    #  issuer:
+    #    did: "did:web:my-did:did"
+    #    credentials:
+    #      - validFor:
+    #          from: "2022-07-21T17:32:28Z"
+    #          to: "2040-07-21T17:32:28Z"
+    #        credentialsType: "MyService"
+    #        claims:
+    #          - name: "roles"
+    #            allowedValues: 
+    #              - - names:
+    #                  - "MY_ROLE"
+    #                  target: "did:web:my-target:did"
+    #      - validFor:
+    #          from: "2022-07-21T17:32:28Z"
+    #          to: "2040-07-21T17:32:28Z"
+    #        credentialsType: "VerifiableCredential"
