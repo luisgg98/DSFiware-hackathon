@@ -10,6 +10,7 @@
     - [Verification](#verification)
       - [values.did.key.yaml](#valuesdidkeyyaml)
       - [values.did.web.yaml](#valuesdidwebyaml)
+  - [Step3.2-Publication of the did:web route](#step32-publication-of-the-didweb-route)
 
 Any participant willing to consume services provided by the data space will require a minimum infrastructure that will enable the management of Verifiable Credentials besides a Decentralized Identifier that will constitue the signing mechanism to authenticate any message, any request made by the consumer.   
 This section describes the steps and the components to be deployed.  
@@ -199,3 +200,17 @@ kExec net -v -- curl http://did:3000/did-material/did.env
 ...
 ```
 This previous verification is highly sensitive, so protect this kind of actions at your production k8s cluster; eg. using _KubeArmorPolicies_.
+
+## Step3.2-Publication of the did:web route
+As explained before, one of the requirements of the did:web DIDs is that they must be accessible from the internet at the well known endpoint `/.well-known/did.json`. To setup a new route to access this json document it is mandatory to have the control of the chosen DNS having its certificates (these certificates will have to be signed by an Certification Authority (CA)):
+1. Create a tls secret containing the certificate files.
+  ```shell
+  kubectl create secret tls ita.es-tls -n apisix --key /certificates/<organization>/privkey.pem --cert /certificates/<organization>/fullchain.pem
+  ```
+2. Modify the apisix to manage a new DNS (`fiwaredsc-consumer.ita.es`) using the tls `ita.es-tls` and upgrade the apisix Helm chart.
+
+3. Once deployed, a new route must be registered to expose the did.json document at the endpoint `https://fiwaredsc-consumer.ita.es/.well-known/did.json`
+
+To test it is working, browse this URL:
+<p style="text-align:center;font-style:italic;font-size: 75%"><img src="./../images/did-web.json.png"><br/>
+    did-web.json exposed at a well known URL</p>

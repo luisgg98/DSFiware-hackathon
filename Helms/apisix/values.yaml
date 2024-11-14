@@ -64,11 +64,15 @@ apisix:
           path: /
         - name: fiwaredsc-trustanchor.local
           path: /
+        - name: fiwaredsc-consumer.ita.es
+          path: /
       extraTls:
         - hosts: [fiwaredsc-consumer.local, 
                   fiwaredsc-api6dashboard.local,
                   fiwaredsc-trustanchor.local]
           secretName: wildcardlocal-tls
+        - hosts: [fiwaredsc-consumer.ita.es]
+          secretName: ita.es-tls
     extraConfig:
       deployment:
         # https://apisix.apache.org/docs/apisix/deployment-modes/

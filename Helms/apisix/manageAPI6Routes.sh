@@ -48,9 +48,28 @@ ROUTE_TIR_JSON='{
   }
 }'
 
+# https://fiwaredsc-consumer.ita.es/.well-known/did.json
+ROUTE_DID_WEB_fiwaredsc_consumer_ita_es='{
+  "uri": "/.well-known/did.json",
+  "host": "fiwaredsc-consumer.ita.es",
+  "methods": ["GET"],
+  "upstream": {
+    "type": "roundrobin",
+    "nodes": {
+      "did.consumer.svc.cluster.local:3000": 1
+    }
+  },
+  "plugins": {
+      "proxy-rewrite": {
+          "uri": "/did-material/did.json"
+      }
+  }
+}'
 
 curl -i -X POST -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN" \
--d "$ROUTE_TIR_JSON"
+-d "$ROUTE_DID_WEB_fiwaredsc_consumer_ita_es"
+# curl -i -X POST -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN" \
+# -d "$ROUTE_TIR_JSON"
 # curl -i -X POST -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN" \
 # -d "$ROUTE_API6DASHBOARD_JSON"
 # Output similar to: {"key":"/apisix/routes/00000000000000000077","value":{"create_time":1731400093,
