@@ -4,7 +4,7 @@
   - [Verifiable Credentials](#verifiable-credentials)
     - [Usage and actors around a VC](#usage-and-actors-around-a-vc)
     - [Benefits of Using DIDs with VCs](#benefits-of-using-dids-with-vcs)
-  - [Step20: _Deployment of the DID:key_](#step20-deployment-of-the-didkey)
+  - [Step3.1: _Deployment of the DID:key_](#step31-deployment-of-the-didkey)
     - [values-did.key.yaml](#values-didkeyyaml)
     - [values-did.web.yaml](#values-didwebyaml)
     - [Verification](#verification)
@@ -65,7 +65,7 @@ To extend the knowledge of these concepts, the web offers a handful set of resou
 In this phase, setups to deploy both did: `did:key` and `did:web` will be shown. but the fact that the use of a did:web implies the control of a public DNS to publicly expose the well known did:web endpoint for being consumer by any 'verifier' and mainly to route cloud requests to the server bound to the did:web DNS.   
 _eg. to use the `did:web:fiwaredsc-consumer.ita.es`, The [Instituto Tecnológico de Aragón (ITA)](https://www.ita.es/) owner of the `ita.es` domain, must redirect web requests made to https://fiwaredsc-consumer.ita.es to the server in which the DID is exposed at the well known endpoint `https://fiwaredsc-consumer.ita.es/.well-known/did.json`_
 
-## Step20: _Deployment of the DID:key_ 
+## Step3.1: _Deployment of the DID:key_ 
 The consumer Helm Chart provides two value files. One to deploy the DID:key component and another to deploy the DID:web one. To deploy the DID:key run:
 At this first step, only the utils and the did are enabled to trace potential problems.
 ### values-did.key.yaml
