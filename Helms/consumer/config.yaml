@@ -1,0 +1,22 @@
+name: consumer
+chart: 
+namespace: consumer
+valueFile: values.yaml
+
+# Admin URL access: https://fdsc-consumer-keycloak.ita.es
+# User URL access: https://fdsc-consumer-keycloak.ita.es/realms/cfastdistributionRealm/account/oid4vci; admin-user; test
+# User URL access: https://fdsc-consumer-keycloak.ita.es/realms/cfastdistributionRealm/account/oid4vci; admin-user; test
+# Once logged in, a VC is generated as BIDI that can be read by a compatible wallet
+# URL Wallet (to be used from a mobile): https://fiwaredsc-wallet.ita.es
+
+# didweb URLS:
+# $ curl http://didweb:3000/did-material/did.env
+# DID=did:web:fiwaredsc-consumer.ita.es
+# $ curl http://didweb:3000/did-material/did.json
+# {
+#   "@context": [
+#     "https://www.w3.org/ns/did/v1",
+#     "https://w3id.org/security/suites/jws-2020/v1"
+#   ],
+#   "id": "did:web:fiwaredsc-consumer.ita.es",
+#   ...

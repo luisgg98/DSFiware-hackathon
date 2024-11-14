@@ -19,20 +19,20 @@ This steps, using the components at the apisix Chart, deploys a basic version of
 3. Create the TLS Certificate  
     a) Using Organization official certificates (issued by Certification authority companies such as Let’s encrypt, ZeroSSL, …) For every public TLS/SSL certificate, CAs must verify, at a minimum, the requestors' domain.e.g. Let’s encrypt.  
     b) Generate not trusted certificates just for testing:
-    ```
+    ```shell
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout Helms/apisix/certs/tls-wildcard.key -out Helms/apisix/certs/tls-wildcard.crt -subj "/CN=*.local"
     ```
 4. Create the TLS k8s secret generic based on the previously created certificate. Name it _wildcardlocal-tls_ and ensure the value files refers to this secret at the _utils.echo.ingress.tls.secretName_
-  ```
+  ```shell
   kubectl create secret tls wildcardlocal-tls -n apisix --key Helms/apisix/certs/tls-wildcard.key --cert Helms/apisix/certs/tls-wildcard.crt
   ```
   If the namespace does not exist yet, create it:
-  ```
+  ```shell
   kubectl create ns apisix
   ```
 6. Customize the apisix values file  
 For example, you can start enabling just the utils components activating the enabled flags for utils and deactivating it for the apisix component  
-    ```
+    ```yaml
     utils:
       enabled: true
       echo:
@@ -44,33 +44,31 @@ For example, you can start enabling just the utils components activating the ena
       enabled: false
     ```
 1. Deploy the helm
-    ```
+    ```shell
     hFileCommand apisix install
     # Will execute helm command: helm -n test install -f "./Helms/apisix/values.yaml" apisix "./Helms/apisix/"  --create-namespace
     ```
 2. Test it. Does it work?
-    ```
+    ```shell
     curl https://fiwaredsc-consumer.local
     curl -k https://fiwaredsc-consumer.local
     ```
 
 ## Step02: Deploy a functional version of apisix  
 NOTE to avoid refering to the namespace apisix at each command, the ENV VAR DEF_KTOOLS_NAMESPACE=apisix is set:
-```
+```shell
 export DEF_KTOOLS_NAMESPACE=apisix
 ```
 
 1. Modify the values to enable apisix and disable the util's ingress.
 2. Deploy the changes
-    ```
+    ```shell
     hFileCommand apisix restart
     # Running CMD=[helm -n apisix install -f "./Helms/apisix/values.yaml" apisix "./Helms/apisix/"  --create-namespace]
-
     ```
 3. After some seconds the deployments should be running
-    ```
-    $ kGet 
-    ...
+    ```shell
+    kGet 
     #   Running command [kubectl get pod  -n apisix  ]
     ---
     NAME                                         READY   STATUS    RESTARTS   AGE
@@ -83,7 +81,7 @@ export DEF_KTOOLS_NAMESPACE=apisix
     netutils-65cd7b88b8-fwn5h                    1/1     Running   0          5h23m
     ```
 4. Test it. Does it work?
-    ```
+    ```shell
     curl -k https://fiwaredsc-consumer.local
     ```
 
@@ -93,7 +91,7 @@ As you have seen, there is a dashboard component deployed, but just one dns mana
 eg. fiwaredsc-api6dashboard.local ...
 2. For Local DNS register at the /etc/hosts (ubuntu) and/or C:\Windows\System32\drivers\etc\hosts (windows)
 3. Modify the values file to use the new dns and the wildcard tls certificate
-    ```
+    ```yaml
     apisix:
       ...
       ingress:
@@ -109,7 +107,7 @@ eg. fiwaredsc-api6dashboard.local ...
       ...
     ```
 4. Modify the ./Helms/apisix.apisix-routes.yaml to add the route for the apisix dashboard:
-      ```
+      ```yaml
       routes:
       - 
         uri: /*
@@ -130,20 +128,20 @@ eg. fiwaredsc-api6dashboard.local ...
       #END
       ```
 7. Redeploy the helm chart:
-    ```
-    $ hFileCommand api upgrade
+    ```shell
+    hFileCommand api upgrade
     # Running CMD=[helm -n apisix upgrade -f "./Helms/apisix/./values.yaml" apisix "./Helms/apisix/./"  --create-namespace]
     Release "apisix" has been upgraded. Happy Helming!
     ```
 8. Test it. Does it work?
-    ```
+    ```shell
     curl -k https://fiwaredsc-api6dashboard.local
     ```
     <p style="text-align:center;font-style:italic;font-size: 75%"><img src="./../images/apisix-dashboard.PNG"><br/>
     APISIX Dashboard</p>
 9. Retrieve the password to login at a browser.  
 If you visit the values file, the secret and the key used to store the dashboard user's password are defined:
-    ```
+    ```yaml
     apisix:
       dashboard:
         ...
@@ -152,9 +150,8 @@ If you visit the values file, the secret and the key used to store the dashboard
         ...
     ```
     So, use kubectl command to retrieve the password:  
-    ```
-    $ kSecret-show dashboard-secrets -f apisix-dashboard-secret -v
-    ...
+    ```shell
+    kSecret-show dashboard-secrets -f apisix-dashboard-secret -v
     Running CMD=[kubectl get -n apisix secrets apisix-dashboard-secrets -o jsonpath='{.data.apisix-dashboard-secret}' | base64 -d]
     ```
     <p style="text-align:center;font-style:italic;font-size: 75%"><img src="./../images/apisix-dashboard-routes.png"><br/>
@@ -167,7 +164,7 @@ Instead of modifying the apisix.yaml file, routes can be managed via Admin API (
 In this exercise, using the provided _manageAPI6Routes.ypynb_ or _manageAPI6Routes.sh_ recreate the route /hello using the Admin API:
 1. If it still exists, delete the /hello route from the apisix.yaml file and redeploy the helm chart
 2. Test the /hello route. Does it work? It should not.
-    ```
+    ```shell
     $ curl -k https://fiwaredsc-consumer.local
     {"error_msg":"404 Route Not Found"}
     ```
@@ -176,12 +173,12 @@ In this exercise, using the provided _manageAPI6Routes.ypynb_ or _manageAPI6Rout
    <p style="text-align:center;font-style:italic;font-size: 75%"><img src="./../images/apisix-dashboard-routes.png"><br/>
     APISIX Routes</p>
 5. Test the /hello route. Does it work? Now, it should.
-    ```
+    ```shell
     $ curl -k https://fiwaredsc-consumer.local/hello
     ```
     But... it does not. This is because the routes managed by the Admin API (The control-plane component) are used when the data-plane's role is set to use the config_provider: etcd.  
 6. Modify the data-plane deployment's configuration to change the config_provider:
-```
+```yaml
 dataPlane:
    ingress:
     ...
@@ -196,11 +193,11 @@ dataPlane:
 ```
 
 7. Test the /hello route. Does it work? Now, it should.
-    ```
-    $ curl -k https://fiwaredsc-consumer.local/hello
+    ```shell
+    curl -k https://fiwaredsc-consumer.local/hello
     ```
     Nevertheless, as the routes are now managed by the etcd component, the dashboard is not working. Try    
-    ```
+    ```shell
     curl -k https://fiwaredsc-api6dashboard.local
     {"error_msg":"404 Route Not Found"}
     ```

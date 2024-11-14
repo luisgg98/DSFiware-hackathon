@@ -10,16 +10,16 @@ The main component to be deployed is the [Fiware Trusted Issuers List](https://g
 
 ## Step10: _Deploy the Helm trustAnchor helm chart_
 1. Deployment of the trustAnchor Helm chart.
-    ```
-    $ hFileCommand trustAnchor
+    ```shell
+    hFileCommand trustAnchor
     # Running command=[helm -n trust-anchor install -f "./Helms/trustAnchor/values.yaml" trust-anchor "./Helms/trustAnchor/"  --create-namespace]
     ...
     ```
 
     After a few seconds both the mySql server and the Trusted Issuer Registry will be deployed.  
 2. Verify it is properly created.
-    ```
-    $ kGet 
+    ```shell
+    kGet 
     #   Running command [kubectl get pod  -n trust-anchor  ]
     ---
     NAME                        READY   STATUS    RESTARTS      AGE
@@ -30,12 +30,12 @@ The main component to be deployed is the [Fiware Trusted Issuers List](https://g
     We see that all pods have Running status and 1/1 instance is ready.
 
 3. Verify it is accessible.
-      ```
+      ```shell
       # Change the default namespace to be used:
-      $ export DEF_KTOOLS_NAMESPACE=trust-anchor
+      export DEF_KTOOLS_NAMESPACE=trust-anchor
 
       # Identify the names of the services
-      $ kGet svc
+      kGet svc
       #   Running command [kubectl get svc  -n trust-anchor  ]
       ---
       NAME                          TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
@@ -46,14 +46,14 @@ The main component to be deployed is the [Fiware Trusted Issuers List](https://g
       ```
       We see that the service (svc) tir is exposed at port 8080.
       
-      ```      
+      ```shell     
       # Access one of the pods with curl installed:
-      $ kExec utils -- curl http://tir:8080/v4/issuers
+      kExec utils -- curl http://tir:8080/v4/issuers
       # Running command [kubectl exec -it -n trust-anchor netutils-65cd7b88b8-jw9pp  --  curl http://tir:8080/v4/issuers]
       ---
       {"self":"/v4/issuers/","items":[],"total":0,"pageSize":0,"links":null}
       
-      $ kExec utils -- curl -I http://tir:8080/v4/issuers
+      kExec utils -- curl -I http://tir:8080/v4/issuers
       # Running command [kubectl exec -it -n trust-anchor netutils-65cd7b88b8-jw9pp  --  curl -I http://tir:8080/v4/issuers]
       ---
       HTTP/1.1 200 OK
@@ -67,9 +67,9 @@ The main component to be deployed is the [Fiware Trusted Issuers List](https://g
    - Decide a DNS to expose the Trusted Issuer Registry. eg. _fiwaredsc-trustanchor.local_ 
    - Decide the methods to be exposed at the route (the lesser, the better)
    - Identify the service to be connected to the route. In the apisix section, all the services exposed, belonged to the same k8s namespace, but from now on, all the services are exposed at different namespaces and hence, the  naming of a service for being globally accessible across the kubernetes cluster is **SVCNAME.NAMESPACE.svc.cluster.local**.  To double check the naming, the _nslookup_ method could be used from inside a pod of the namespace trust-anchor
-    ```
-    $ kExec utils -- nslookup tir
-    Running command [kubectl exec -it -n trust-anchor netutils-65cd7b88b8-jw9pp  --  nslookup tir]
+    ```shell
+    kExec utils -- nslookup tir
+    # Running command [kubectl exec -it -n trust-anchor netutils-65cd7b88b8-jw9pp  --  nslookup tir]
     ---
     Server:         10.96.0.10
     Address:        10.96.0.10#53
@@ -82,15 +82,15 @@ The main component to be deployed is the [Fiware Trusted Issuers List](https://g
 
 
 5. As a new DNS is in use, the apisix values file has to include it. Modify it, delete the apisix-data-plane deployment and upgrade the helm chart.
-    ```
-    $ kRemoveRestart deploy data-plane -n api
+    ```shell
+    kRemoveRestart deploy data-plane -n api
     # Running command [kubectl delete -n apisix deploy apisix-data-plane]
-    $ hFileCommand api u
+    hFileCommand api u
     # Running CMD=[helm -n apisix upgrade -f "./Helms/apisix/values.yaml" apisix "./Helms/apisix/"  --create-namespace]
     ```
 
 7. Add a new route to the apisix to expose the Trusted Issuer Registry. Using the tools shown in the previous chapter, add a new route that describes the tir service, for example, using the _manageAPI6Routes.sh_:
-    ```
+    ```json
     ROUTE_TIR_JSON='{
       "name": "TIR",
       "uri": "/*",
@@ -106,12 +106,12 @@ The main component to be deployed is the [Fiware Trusted Issuers List](https://g
     ```
   
     To test it is accessible try:
-    ```
-    $ curl -k https://fiwaredsc-trustanchor.local/v4/issuers
+    ```shell
+    curl -k https://fiwaredsc-trustanchor.local/v4/issuers
     {"self":"/v4/issuers/","items":[],"total":0,"pageSize":0,"links":null}
     ```
 
 ## Bottom line
 The Trust Anchor deployment has set the corner stone of the data space. Now, the Fiware Data Space architecture deployed looks like:
    <p style="text-align:center;font-style:italic;font-size: 75%"><img src="./../images/Fiware-DataSpaceGlobalArch-phase02.png"><br/>
-    Deployed architecture after phase 1 completed</p>
+    Deployed architecture after phase 2 completed</p>
