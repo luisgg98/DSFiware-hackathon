@@ -1,7 +1,7 @@
 name: consumer
 chart: 
 namespace: consumer
-valueFile: values.yaml
+valueFile: values-did.web.yaml
 
 # Admin URL access: https://fdsc-consumer-keycloak.ita.es
 # User URL access: https://fdsc-consumer-keycloak.ita.es/realms/cfastdistributionRealm/account/oid4vci; admin-user; test

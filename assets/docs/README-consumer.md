@@ -11,6 +11,8 @@
       - [values.did.key.yaml](#valuesdidkeyyaml)
       - [values.did.web.yaml](#valuesdidwebyaml)
   - [Step3.2-Publication of the did:web route](#step32-publication-of-the-didweb-route)
+  - [_Step3.3-Deployment of the Keycloak_](#step33-deployment-of-the-keycloak)
+    - [Verification](#verification-1)
 
 Any participant willing to consume services provided by the data space will require a minimum infrastructure that will enable the management of Verifiable Credentials besides a Decentralized Identifier that will constitue the signing mechanism to authenticate any message, any request made by the consumer.   
 This section describes the steps and the components to be deployed.  
@@ -214,3 +216,47 @@ As explained before, one of the requirements of the did:web DIDs is that they mu
 To test it is working, browse this URL:
 <p style="text-align:center;font-style:italic;font-size: 75%"><img src="./../images/did-web.json.png"><br/>
     did-web.json exposed at a well known URL</p>
+
+## _Step3.3-Deployment of the Keycloak_
+[Keycloak](https://www.keycloak.org/) is an open source identity and access management solution that on its [release v25](https://www.keycloak.org/docs/latest/release_notes/index.html#openid-for-verifiable-credential-issuance-experimental-support) supports the protocol [OpenID for Verifiable Credential Issuance (OID4VCI) OID4VC](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html) to manage Verifiable Credentials, and so, it can play the role of VCIssuer in the data space architecture.  
+The values of the Keycloak are more complex than previous helms, so it is recomended to analyze them to get familiar with. As a brief summary, the values focus on the following areas:
+- It setups a [postgresSql](https://www.postgresql.org/) instance.
+- No ingress is enabled as the Keycloak will be exposed via an apisix route.
+- Internally, the pods expose their endpoints via the https ports setting up a tls using the dns `fiwaredsc-consumer.ita.es`, so both inside and outside the k8s network the URL to access the Keycloak will be `https://fiwaredsc-consumer.ita.es/`
+- A [Realm](https://mi-do.medium.com/understanding-realms-clients-and-roles-in-keycloak-c88a6e57d74f) `consumerRealm` is created at startup to manage a set of users, credentials, roles, and verifiable credentials
+
+The deployment of the helm is taking in the development server around 3 minutes, so while an error appears or the deployment is successful, it is interesting to check to correct deployment of the chart, you can use the `devopTools` commands `kGet`, `kLog`, `kDescribe`, ... It is also interesting to analyze the k8s components generated using the command `hFileCommand`:
+```shell
+hFileCommand consumer debug > .tmp/componentsconsumer.yaml
+```
+
+NOTE: Most of the secrets used in this tutorial are randomly generated and although they are tried to be kept, they could be deleted. Imagine, _this helm chart is uninstalled and the secret manually deleted_. A new deployment of the chart will generate a new secret with new passwords to access the previously generated DDBB using a previously existing password (that has been destroyed forever). In these scenarios the only options are:
+- Recreate the DDBB from scratch
+- Stablish a policy to save the secrets and install manually them instead of generate new ones with random passwords.  
+
+### Verification
+Once the consumer helm has been deployed, it should look similar to this:
+```shell
+kGet 
+#   Running command [kubectl get pod  -n consumer  ]
+NAME                              READY   STATUS    RESTARTS   AGE
+consumer-keycloak-0               1/1     Running   0          3m37s
+consumer-postgresql-0             1/1     Running   0          3m37s
+did-web-7b8f9b5d5d-lwwsf          1/1     Running   0          3m37s
+utils-nettools-8554c96795-b6ssf   1/1     Running   0          3m37s
+```
+
+By now the endpoint is not externally accessible, but this command to show the well known openid configuration should work (`HTTP/2 200` should be the returned status request.):
+```shell
+curl -k https://consumer-keycloak/realms/consumerRealm/.well-known/openid-configuration -H fIdsc-consumer-keycloak.ita.es
+  HTTP/2 200 
+  cache-control: no-cache, must-revalidate, no-transform, no-store
+  content-type: application/json;charset=UTF-8
+  referrer-policy: no-referrer
+  strict-transport-security: max-age=31536000; includeSubDomains
+  x-content-type-options: nosniff
+  x-frame-options: SAMEORIGIN
+  x-xss-protection: 1; mode=block
+```
+
+Not to mention that this previous command is faking the Host name, but the whole values file should be tailored to match the DNS managed by your organization to be used.

@@ -42,3 +42,28 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
+
+
+{{/*
+Return the secret containing the Keycloak admin password
+*/}}
+{{- define "consumer.keycloak.secretName" -}}
+{{- $secretName := .Values.keycloak.auth.existingSecret -}}
+{{- if $secretName -}}
+    {{- printf "%s" (tpl $secretName $) -}}
+{{- else -}}
+    {{- printf "%s" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the secret key that contains the Keycloak admin password
+*/}}
+{{- define "consumer.keycloak.secretKey" -}}
+{{- $secretName := .Values.keycloak.auth.existingSecret -}}
+{{- if and $secretName .Values.keycloak.auth.passwordSecretKey -}}
+    {{- printf "%s" .Values.keycloak.auth.passwordSecretKey -}}
+{{- else -}}
+    {{- print "admin-password" -}}
+{{- end -}}
+{{- end -}}
