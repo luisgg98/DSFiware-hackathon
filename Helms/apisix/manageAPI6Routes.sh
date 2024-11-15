@@ -66,8 +66,24 @@ ROUTE_DID_WEB_fiwaredsc_consumer_ita_es='{
   }
 }'
 
+# https://fiwaredsc-consumer.ita.es/
+ROUTE_CONSUMER_KEYCLOAK_fiwaredsc_consumer_ita_es='{
+  "uri": "/*",
+  "host": "fiwaredsc-consumer.ita.es",
+  "methods": ["GET", "POST", "PUT", "HEAD", "CONNECT", "OPTIONS", "PATCH", "DELETE"],
+  "upstream": {
+    "type": "roundrobin",
+    "scheme": "https",
+    "nodes": {
+      "consumer-keycloak.consumer.svc.cluster.local:443": 1
+    }
+  }
+}'
+
 curl -i -X POST -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN" \
--d "$ROUTE_DID_WEB_fiwaredsc_consumer_ita_es"
+-d "$ROUTE_CONSUMER_KEYCLOAK_fiwaredsc_consumer_ita_es"
+# curl -i -X POST -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN" \
+# -d "$ROUTE_DID_WEB_fiwaredsc_consumer_ita_es"
 # curl -i -X POST -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN" \
 # -d "$ROUTE_TIR_JSON"
 # curl -i -X POST -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN" \

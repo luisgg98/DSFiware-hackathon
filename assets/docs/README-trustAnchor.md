@@ -89,7 +89,7 @@ The main component to be deployed is the [Fiware Trusted Issuers List](https://g
     # Running CMD=[helm -n apisix upgrade -f "./Helms/apisix/values.yaml" apisix "./Helms/apisix/"  --create-namespace]
     ```
 
-7. Add a new route to the apisix to expose the Trusted Issuer Registry. Using the tools shown in the previous chapter, add a new route that describes the tir service, for example, using the _manageAPI6Routes.sh_:
+7. Add a new route to the Apisix to expose the Trusted Issuer Registry. Using the tools shown in the previous chapter, add a new route that describes the tir service, for example, using the _manageAPI6Routes.sh_:
     ```json
     ROUTE_TIR_JSON='{
       "name": "TIR",

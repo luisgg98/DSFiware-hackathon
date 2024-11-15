@@ -2,7 +2,7 @@
 - [Apisix](#apisix)
   - [Step01: _Deploy a basic version of a helloWorld chart_](#step01-deploy-a-basic-version-of-a-helloworld-chart)
   - [Step02: Deploy a functional version of apisix](#step02-deploy-a-functional-version-of-apisix)
-  - [Step3: Deploy a new route via the apisix.yaml file](#step3-deploy-a-new-route-via-the-apisixyaml-file)
+  - [Step3: Deploy a new route via the Apisix.yaml file](#step3-deploy-a-new-route-via-the-apisixyaml-file)
   - [Step4: Use Admin API to manage routes](#step4-use-admin-api-to-manage-routes)
   - [Bottom line](#bottom-line)
 
@@ -30,8 +30,8 @@ This steps, using the components at the apisix Chart, deploys a basic version of
   ```shell
   kubectl create ns apisix
   ```
-6. Customize the apisix values file  
-For example, you can start enabling just the utils components activating the enabled flags for utils and deactivating it for the apisix component  
+6. Customize the Apisix values file  
+For example, you can start enabling just the utils components activating the enabled flags for utils and deactivating it for the Apisix component  
     ```yaml
     utils:
       enabled: true
@@ -85,9 +85,9 @@ export DEF_KTOOLS_NAMESPACE=apisix
     curl -k https://fiwaredsc-consumer.local
     ```
 
-## Step3: Deploy a new route via the apisix.yaml file
-As you have seen, there is a dashboard component deployed, but just one dns managed by the apisix ingress. This step will modify the apisix.yaml file to include a new route to expose the dashboard to be consumed via browser.
-1. Decide the DNS to expose the apisix dashboard (Local or global DNS)
+## Step3: Deploy a new route via the Apisix.yaml file
+As you have seen, there is a dashboard component deployed, but just one dns managed by the Apisix ingress. This step will modify the apisix.yaml file to include a new route to expose the dashboard to be consumed via browser.
+1. Decide the DNS to expose the Apisi dashboard (Local or global DNS)
 eg. fiwaredsc-api6dashboard.local ...
 2. For Local DNS register at the /etc/hosts (ubuntu) and/or C:\Windows\System32\drivers\etc\hosts (windows)
 3. Modify the values file to use the new dns and the wildcard tls certificate
@@ -106,7 +106,7 @@ eg. fiwaredsc-api6dashboard.local ...
             secretName: wildcard_local-tls
       ...
     ```
-4. Modify the ./Helms/apisix.apisix-routes.yaml to add the route for the apisix dashboard:
+4. Modify the ./Helms/apisix.apisix-routes.yaml to add the route for the Apisi dashboard:
       ```yaml
       routes:
       - 
@@ -160,7 +160,7 @@ If you visit the values file, the secret and the key used to store the dashboard
     You may notice that none of the routes defined at the apisix.yaml file appear here. This is because the dashboard usually displays routes that were created via the Admin API because it directly interacts with APISIX's etcd storage. When you load configuration from a YAML file, APISIX typically treats it as static configuration, so it doesn’t get recorded in etcd in a way that the dashboard can view.  
 
 ## Step4: Use Admin API to manage routes
-Instead of modifying the apisix.yaml file, routes can be managed via Admin API (the deployment **apisix-control-plane** exposes the endpoints to manage them) or via the dashboard set up at the previous Step.
+Instead of modifying the apisix.yaml file, routes can be managed via Admin API (the deployment **Apisix-control-plane** exposes the endpoints to manage them) or via the dashboard set up at the previous Step.
 In this exercise, using the provided _manageAPI6Routes.ypynb_ or _manageAPI6Routes.sh_ recreate the route /hello using the Admin API:
 1. If it still exists, delete the /hello route from the apisix.yaml file and redeploy the helm chart
 2. Test the /hello route. Does it work? It should not.

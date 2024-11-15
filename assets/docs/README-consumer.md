@@ -13,6 +13,7 @@
   - [Step3.2-Publication of the did:web route](#step32-publication-of-the-didweb-route)
   - [_Step3.3-Deployment of the Keycloak_](#step33-deployment-of-the-keycloak)
     - [Verification](#verification-1)
+  - [Step3.4-Publication and first access to the Keycloak route](#step34-publication-and-first-access-to-the-keycloak-route)
 
 Any participant willing to consume services provided by the data space will require a minimum infrastructure that will enable the management of Verifiable Credentials besides a Decentralized Identifier that will constitue the signing mechanism to authenticate any message, any request made by the consumer.   
 This section describes the steps and the components to be deployed.  
@@ -207,9 +208,9 @@ This previous verification is highly sensitive, so protect this kind of actions 
 As explained before, one of the requirements of the did:web DIDs is that they must be accessible from the internet at the well known endpoint `/.well-known/did.json`. To setup a new route to access this json document it is mandatory to have the control of the chosen DNS having its certificates (these certificates will have to be signed by an Certification Authority (CA)):
 1. Create a tls secret containing the certificate files.
   ```shell
-  kubectl create secret tls ita.es-tls -n apisix --key /certificates/<organization>/privkey.pem --cert /certificates/<organization>/fullchain.pem
+  kubectl create secret tls wildcard-ita.es-tls -n apisix --key /certificates/<organization>/privkey.pem --cert /certificates/<organization>/fullchain.pem
   ```
-2. Modify the apisix to manage a new DNS (`fiwaredsc-consumer.ita.es`) using the tls `ita.es-tls` and upgrade the apisix Helm chart.
+2. Modify the Apisix to manage a new DNS (`fiwaredsc-consumer.ita.es`) using the tls `wildcard-ita.es-tls` and upgrade the Apisix Helm chart.
 
 3. Once deployed, a new route must be registered to expose the did.json document at the endpoint `https://fiwaredsc-consumer.ita.es/.well-known/did.json`
 
@@ -260,3 +261,30 @@ curl -k https://consumer-keycloak/realms/consumerRealm/.well-known/openid-config
 ```
 
 Not to mention that this previous command is faking the Host name, but the whole values file should be tailored to match the DNS managed by your organization to be used.
+
+## Step3.4-Publication and first access to the Keycloak route
+In the [_Step3.2-Publication of the did:web route_](#step32-publication-of-the-didweb-route), the tls secret `wildcard-ita.es-tls` and the changes in the `Apisix` gateway to manage the `fiwaredsc-consumer.ita.es` were already done, so at this stage, only the publication of a new route is required to redirect requests to `https://fiwaredsc-consumer.ita.es/` to the newly created Keycloak service:
+
+To test it is working, browse the URL [https://fiwaredsc-consumer.ita.es](https://fiwaredsc-consumer.ita.es):
+<p style="text-align:center;font-style:italic;font-size: 75%"><img src="./../images/keycloak-login.png"><br/>
+    Keycloak exposed at the URL https://fiwaredsc-consumer.ita.es</p>
+
+To know the user and the password, again, the values file must be revisited:
+```yaml
+keycloak:
+  extraEnvVars:
+    - name: KEYCLOAK_ADMIN
+    value: "admin0"
+```
+
+To know the password, the k8s components generated can be revisited to discover an env var containing the secret that keeps this password. `KEYCLOAK_ADMIN_PASSWORD`. To get it, instead of analyzing the secret, a simple `echo` will do the trick:
+```shell
+kExec keycloak -n consumer -v -c keycloak -- printenv KEYCLOAK_ADMIN_PASSWORD
+```
+Once logged in, the portal will present a message explaining that the `admin0` is a temporary admin user.
+<p style="text-align:center;font-style:italic;font-size: 75%"><img src="./../images/keycloak-1stacces.png"><br/>
+    First access to the keycloak portal at the URL https://fiwaredsc-consumer.ita.es</p>
+
+At this point, a new admin user can be created and the different sections of the realm (`consumerRealm`) can be visited. For example this image show the roles defined for the `did:web:fiwaredsc-consumer.ita.es` client at the consumerRealm realm:
+<p style="text-align:center;font-style:italic;font-size: 75%"><img src="./../images/keycloak-consumerRealm-didweb-roles.png"><br/>
+    consumerRealm roles for its `did:web:fiwaredsc-consumer.ita.es` client</p>
