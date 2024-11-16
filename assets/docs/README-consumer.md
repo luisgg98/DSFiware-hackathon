@@ -14,6 +14,10 @@
   - [_Step3.3-Deployment of the Keycloak_](#step33-deployment-of-the-keycloak)
     - [Verification](#verification-1)
   - [Step3.4-Publication and first access to the Keycloak route](#step34-publication-and-first-access-to-the-keycloak-route)
+    - [Roles](#roles)
+    - [Users Registered](#users-registered)
+  - [Step3.5-Issuance of VCs](#step35-issuance-of-vcs)
+    - [Issue VCs through a M2M flow](#issue-vcs-through-a-m2m-flow)
 
 Any participant willing to consume services provided by the data space will require a minimum infrastructure that will enable the management of Verifiable Credentials besides a Decentralized Identifier that will constitue the signing mechanism to authenticate any message, any request made by the consumer.   
 This section describes the steps and the components to be deployed.  
@@ -220,7 +224,9 @@ To test it is working, browse this URL:
 
 ## _Step3.3-Deployment of the Keycloak_
 [Keycloak](https://www.keycloak.org/) is an open source identity and access management solution that on its [release v25](https://www.keycloak.org/docs/latest/release_notes/index.html#openid-for-verifiable-credential-issuance-experimental-support) supports the protocol [OpenID for Verifiable Credential Issuance (OID4VCI) OID4VC](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html) to manage Verifiable Credentials, and so, it can play the role of VCIssuer in the data space architecture.  
-The values of the Keycloak are more complex than previous helms, so it is recomended to analyze them to get familiar with. As a brief summary, the values focus on the following areas:
+The values of the Keycloak are more complex than previous helms, so it is recomended to analyze them to get familiar with.  
+From now on, this guideline will focus solely in the `values-did.web.yaml`.  
+As a brief summary, the values focus on the following areas:
 - It setups a [postgresSql](https://www.postgresql.org/) instance.
 - No ingress is enabled as the Keycloak will be exposed via an apisix route.
 - Internally, the pods expose their endpoints via the https ports setting up a tls using the dns `fiwaredsc-consumer.ita.es`, so both inside and outside the k8s network the URL to access the Keycloak will be `https://fiwaredsc-consumer.ita.es/`
@@ -281,10 +287,138 @@ To know the password, the k8s components generated can be revisited to discover 
 ```shell
 kExec keycloak -n consumer -v -c keycloak -- printenv KEYCLOAK_ADMIN_PASSWORD
 ```
+
 Once logged in, the portal will present a message explaining that the `admin0` is a temporary admin user.
 <p style="text-align:center;font-style:italic;font-size: 75%"><img src="./../images/keycloak-1stacces.png"><br/>
     First access to the keycloak portal at the URL https://fiwaredsc-consumer.ita.es</p>
 
-At this point, a new admin user can be created and the different sections of the realm (`consumerRealm`) can be visited. For example this image show the roles defined for the `did:web:fiwaredsc-consumer.ita.es` client at the consumerRealm realm:
+At this point, a new admin user can be created and the different sections of the realm (`consumerRealm`) can be visited. 
+### Roles
+For example this image show the roles defined for the `did:web:fiwaredsc-consumer.ita.es` client at the consumerRealm realm:
 <p style="text-align:center;font-style:italic;font-size: 75%"><img src="./../images/keycloak-consumerRealm-didweb-roles.png"><br/>
     consumerRealm roles for its `did:web:fiwaredsc-consumer.ita.es` client</p>
+
+### Users Registered
+The Keycloak UI allows the management of users for this Realm, but this deployment has created a couple of them just for testing. `oc-user` and `op-user` with their password present at the value file used.
+<p style="text-align:center;font-style:italic;font-size: 75%"><img src="./../images/keycloak-consumerRealm-oc-user-roles.png"><br/>
+    oc-user roles</p>
+
+## Step3.5-Issuance of VCs
+Once the infrastructure has been validated, Keycloak can be used as a VCIssuer. 
+### Issue VCs through a M2M flow
+This step is the first step of the _Life of a Verifiable Credential_ described at the [www.w3.org vc-data-model](https://www.w3.org/TR/vc-data-model/#lifecycle-details) and as the w3 specification does not describe how a VC has to be issued, the flow here used is based on the [OpenID for Verifiable Credentials Issuance specification](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html). 
+
+<p style="text-align:center;font-style:italic;font-size: 75%"><img src="./../images/VCIssuance-VC.png"><br/>
+    VCIssuance sequence diagram</p>
+
+---
+
+The flow can be executed using:
+- Shell file: [`hackathon-retrieveConsumerVC.sh`](../../scripts/hackathon-retrieveConsumerVC.sh)
+- Juypter Notebook document [`hackathon-retrieveConsumerVC.ipynb`](../../Helms/consumer/)  
+
+We will focus on the jupyter notebook [`hackathon-retrieveConsumerVC.ipynb`](../../Helms/consumer/). It can be run on a Jupyter notebook server, but in this guideline, we are going to use [VSCode](https://code.visualstudio.com/) and its [VSCode Jupyter extension](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter)    
+Alternatively, to use the script version ([`hackathon-retrieveConsumerVC.sh`](../../scripts/hackathon-retrieveConsumerVC.sh)) just run it. 
+```shell
+./scripts/hackathon-retrieveConsumerVC.sh -h # To obtain info about the params
+./scripts/hackathon-retrieveConsumerVC.sh -s # To run it stopping after each step
+```
+
+0. Before the Jupyter Notebook can be run, a [conda working environment](https://edcarp.github.io/introduction-to-conda-for-data-scientists/02-working-with-environments/index.html) is required. A brief guideline can be found at [Install and setup an environment using Conda](https://github.com/cgonzalezITA/devopsTools/blob/master/pTools/README.md#install-and-setup-an-environment-using-conda).  
+
+1. Set the VSCode Kernel to be used
+<p style="text-align:center;font-style:italic;font-size: 75%"><img src="./../images/VCIssuance-usingVSCodeJupyterNB.png"><br/>
+    Jupyter notebook Kernel selection</p>
+
+2. The following env vars have to be customized to your environment: 
+   
+```shell
+URL_VCISSUER=https://fiwaredsc-consumer.ita.es/realms/consumerRealm
+ADMIN_CLI=admin-cli
+USER_01=oc-user
+USER_01_PASSWORD=test
+CREDENTIAL_TYPE=user-credential
+```
+3. Get the URL from the well known openid configuration to retrieve the Token to access the VC
+```python
+url=f"{URL_VCISSUER}/.well-known/openid-configuration"
+response = requests.get(url)
+response.raise_for_status()
+jsonResponse=response.json()
+URL_VCISSUER_TOKEN=jsonResponse["token_endpoint"]
+# URL_VCISSUER_TOKEN=https://fiwaredsc-consumer.ita.es/realms/consumerRealm/protocol/openid-connect/token
+```  
+4. Get Token to access the credential's offer URI
+```python
+url=URL_VCISSUER_TOKEN
+data={"grant_type": "password",
+      "client_id": ADMIN_CLI,
+      "username": USER_01,
+      "password": USER_01_PASSWORD
+}
+headers={'Content-Type': 'application/x-www-form-urlencoded'}
+response = requests.post(url, data=data, headers=headers)
+jsonResponse=response.json()
+response.raise_for_status()
+ACCESS_TOKEN=jsonResponse["access_token"]
+# ACCESS_TOKEN=eyJhbGciOiJSUz...
+```
+5. Get a credential offer uri, using the retrieved AccessToken
+```python
+URL_CREDENTIAL_OFFER=f"{URL_VCISSUER}/protocol/oid4vc/credential-offer-uri"
+url=URL_CREDENTIAL_OFFER
+params={"credential_configuration_id": CREDENTIAL_TYPE}
+headers={'Authorization': f"Bearer {ACCESS_TOKEN}"}
+response = requests.get(url, params=params, headers=headers)
+jsonResponse=response.json()
+response.raise_for_status()
+OFFER_URI=f'{jsonResponse["issuer"]}{jsonResponse["nonce"]}'
+# OFFER_URI=https://fiwaredsc-consumer.ita.es/realms/consumerRealm/protocol/oid4vc/credential-offer/xDPxU4hPo...
+```
+
+6. Use the offer uri, to retrieve a preauthorized code
+```python
+url=OFFER_URI
+headers={'Authorization': f"Bearer {ACCESS_TOKEN}"}
+response = requests.get(url, headers=headers)
+jsonResponse=response.json()
+response.raise_for_status()
+PRE_AUTHORIZED_CODE=jsonResponse["grants"]["urn:ietf:params:oauth:grant-type:pre-authorized_code"]["pre-authorized_code"]
+# PRE_AUTHORIZED_CODE=5bcc0ea1-2571-4127-a07
+```
+
+7. Uses the pre-authorized code to get a credential AccessToken at the authorization server
+```python
+url=URL_VCISSUER_TOKEN
+data={"grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
+      "pre-authorized_code": PRE_AUTHORIZED_CODE,
+      "code": PRE_AUTHORIZED_CODE
+}
+headers={'Content-Type': 'application/x-www-form-urlencoded'}
+response = requests.post(url, data=data, headers=headers)
+jsonResponse=response.json()
+response.raise_for_status()
+CREDENTIAL_ACCESS_TOKEN=jsonResponse["access_token"]
+# CREDENTIAL_ACCESS_TOKEN=eyJhbGciOiJSUzI1...
+```
+
+8. Finally Use the returned access token to get your goal, **the Verifiable Credential**
+```python
+url=URL_CREDENTIAL_ENDPOINT
+data={"credential_identifier": CREDENTIAL_TYPE,
+      "format": "jwt_vc" }
+headers={'Accept': '*/*',
+         'Content-Type': 'application/json',
+         'Authorization': f'Bearer {CREDENTIAL_ACCESS_TOKEN}'}
+response = requests.post(url, json=data, headers=headers)
+jsonResponse=response.json()
+response.raise_for_status()
+VERIFIABLE_CREDENTIAL=jsonResponse["credential"]
+```
+
+```python
+# Verifiable Credential user-credential For user oc-user
+# VERIFIABLE_CREDENTIAL=eyJhbGciOiJFUzI1NiIsInR5c...
+```
+
+This VC will be later used to access the Data Space.
