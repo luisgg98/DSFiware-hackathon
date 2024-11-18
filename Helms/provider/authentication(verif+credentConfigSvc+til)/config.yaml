@@ -1,0 +1,81 @@
+name: provider-authentication
+chart: 
+valueFile: values.yaml
+namespace: provider
+
+# Credentials config service:
+# https://github.com/FIWARE/credentials-config-service
+# https://www.youtube.com/watch?v=hm5qMlhpK0g
+# min 23.15: CConfigService setups -depending on the credential types-, which TIR and which local TIL are to use for checking. 
+# In this scenario, the dataplane-registraion.yaml setups this service for the demo.
+# Accessible URLS:
+# curl http://credentials-config-service.provider.svc.cluster.local:8080/service
+#     "total":1,"pageNumber":0,"pageSize":1,"services":
+#     [
+#         {
+#             "id": "data-service",
+#             "defaultOidcScope": "default",
+#             "oidcScopes": {
+#                 "default": [
+#                     {
+#                         "type": "UserCredential",
+#                         "trustedParticipantsLists": [
+#                             "http://tir.trust-anchor.svc.cluster.local:8080"
+#                         ],
+#                         "trustedIssuersLists": [
+#                             "http://trusted-issuers-list:8080"
+#                         ]
+#                     }
+#                 ],
+#                 "operator": [
+#                     {
+#                         "type": "OperatorCredential",
+#                         "trustedParticipantsLists": [
+#                             "http://tir.trust-anchor.svc.cluster.local:8080"
+#                         ],
+#                         "trustedIssuersLists": [
+#                             "http://trusted-issuers-list:8080"
+#                         ]
+#                     }
+#                 ]
+#             }
+#         }
+#     ]
+#
+# Verifier
+# Accessible URLS:
+# - curl https://fiwaredsc-vcverifier.ita.es/health
+#
+# Trusted Issuer List
+# - curl http://trusted-issuers-list.provider.svc.cluster.local:8080/v4/issuers/did:key:zDnaeaZCFpacJZUPLGieTY9V2FFcKTTRtaLcjPbiA5GPAfHvx
+#     {
+#         "did": "did:key:zDnaeaZCFpacJZUPLGieTY9V2FFcKTTRtaLcjPbiA5GPAfHvx",
+#         "attributes": [
+#             {
+#                 "hash": "2riFaxp3eaf7oqk7DJwGzsEpBlvCND7IqQbth6IJ+jA=",
+#                 "body": "eyJjcmVkZW50aWFsc1R5cGUiOiJVc2VyQ3JlZGVudGlhbCIsImNsYWltcyI6W119",
+#                 "issuerType": "Undefined"
+#             }
+#         ]
+#     }
+
+# To insert the consumer as a Trusted Issuer of credentialsType=UserCredential, this code in java is inserting it.
+#         private void cleanUpTIL() throws Exception {
+#                 String consumerDid = getDid(FancyMarketplaceEnvironment.DID_CONSUMER_ADDRESS);
+#                 Request tilCleanRequest = new Request.Builder()
+#                         .delete()
+#                         .url(MPOperationsEnvironment.TIL_DIRECT_ADDRESS + "/issuer/" + consumerDid)
+#                         .build();
+#                 HTTP_CLIENT.newCall(tilCleanRequest).execute();
+#                 Map tilConfig = Map.of(
+#                         "did", getDid(FancyMarketplaceEnvironment.DID_CONSUMER_ADDRESS),
+#                         "credentials", List.of(Map.of("credentialsType", "UserCredential", "claims", List.of())));
+#                 RequestBody tilUpdateBody = RequestBody.create(MediaType.parse("application/json"), OBJECT_MAPPER.writeValueAsString(tilConfig));
+#                 Request tilUpdateRequest = new Request.Builder()
+#                         .post(tilUpdateBody)
+#                         .url(MPOperationsEnvironment.TIL_DIRECT_ADDRESS + "/issuer")
+#                         .build();
+#                 HTTP_CLIENT.newCall(tilUpdateRequest).execute();
+#             }
+# - (Interna) curl -X POST http://trusted-issuers-list.provider.svc.cluster.local:8080/v4/issuers/
+# 

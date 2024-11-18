@@ -1,0 +1,106 @@
+{{- if (.Values.did).enabled }}
+{{ $dockerImage := "itainnovaprojects/ita-didweb-generator:01.00.00" }}
+{{- if .Values.did.image }}
+{{ $dockerImage = .Values.did.image }}
+{{- else if eq .Values.did.type "key" }}
+{{ $dockerImage = "quay.io/wi_stefan/did-helper:0.1.1" }}
+{{ end }}
+{{ $outputFolder := default "/cert" .Values.did.outputFolder }}
+{{ $pfxSecret := default "did-secret" .Values.did.secretName }}
+{{ $pfxSecretKeyField := default "store-pass" .Values.did.pfx.secretKeyField }}
+{{ $pfxAlias := .Values.did.pfx.alias }}
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: {{ printf "did-%s" .Values.did.type }}
+  namespace: {{ $.Release.Namespace | quote }}
+  labels:
+    name: {{ printf "did-%s" .Values.did.type }}
+    {{- include "did.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      name: {{ printf "did-%s" .Values.did.type }}
+      {{- include "did.labels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        name: {{ printf "did-%s" .Values.did.type }}
+        {{- include "did.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: default
+      initContainers:
+        - name: init-did
+          image: {{ $dockerImage }}
+          env:
+            {{- if eq .Values.did.type "web" }} # did type = web
+            - name: DIDGENERATOR_BASE_URL
+              value: {{ (.Values.did).baseURL }}
+            - name: OUTPUTFOLDER
+              value: {{ $outputFolder }}
+            - name: DIDGENERATOR_DIDOUTPUTFILE
+              value: did.json
+            - name: CERT_COMMONNAME
+              value: {{ (.Values.did).cert.commonName }}
+            - name: CERT_COUNTRYNAME
+              value: {{ (.Values.did).cert.country }}
+            - name: CERT_STATE
+              value: {{ (.Values.did).cert.state }}
+            - name: CERT_LOCALITY
+              value: {{ (.Values.did).cert.locality }}
+            - name: CERT_ORGANIZATIONNAME
+              value: {{ (.Values.did).cert.organization }}
+            - name: CERT_ORGANIZATIONUNIT
+              value: {{ (.Values.did).cert.commonName }}
+            - name: PFX_CERTFILE
+              value: {{ (.Values.did).pfx.fileName }}
+            - name: PFX_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $pfxSecret }}
+                  key: {{ $pfxSecretKeyField }}
+            - name: PFX_ALIAS
+              value: {{ $pfxAlias }}
+            {{ else }} # did type = key
+            - name: COUNTRY
+              value: {{ .Values.did.cert.country }}
+            - name: STATE
+              value: {{ .Values.did.cert.state }}
+            - name: LOCALITY
+              value: {{ .Values.did.cert.locality }}
+            - name: ORGANIZATION
+              value: {{ .Values.did.cert.organization }}
+            - name: COMMON_NAME
+              value: {{ .Values.did.cert.commonName }}
+            - name: STORE_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $pfxSecret }}
+                  key: {{ $pfxSecretKeyField }}
+            - name: KEY_ALIAS
+              value: didPrivateKey
+            - name: OUTPUT_FORMAT
+              value: env
+            - name: OUTPUT_FILE
+              value: {{ printf "%s/did.env" $outputFolder }}
+            {{- end }}
+          volumeMounts:
+            - name: did-material
+              mountPath: {{ $outputFolder }}
+      containers:
+        - name: did-server
+          imagePullPolicy: Always
+          image: "lipanski/docker-static-website:2.1.0"
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          volumeMounts:
+            - name: did-material
+              mountPath: /home/static/did-material
+      volumes:
+        - name: did-material
+          emptyDir: { }
+{{- end }}

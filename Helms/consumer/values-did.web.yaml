@@ -220,7 +220,6 @@ keycloak:
       args:
         - -ec
         - |
-          #!/bin/sh
           #!/bin/bash
           # apt-get -y update; apt-get -y install wget
           cd /did-material

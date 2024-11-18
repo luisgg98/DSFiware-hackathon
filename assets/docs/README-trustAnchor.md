@@ -6,7 +6,7 @@
 This registry has the responsibility of verifying the validity of the Verifiable Credentials used at any of the data space communications.  
 It does not depend on any particular provider nor consumer and there could be even different registries to validate different communications.  
 At the scope of this deployment, only one Verifiable data registry will be deployed.  
-The main component to be deployed is the [Fiware Trusted Issuers List](https://github.com/FIWARE/trusted-issuers-list), a service that provides an [EBSI Trusted Issuers Registry](https://hub.ebsi.eu/#/) implementation to act as the Trusted-List-Service in the DSBA Trust and IAM Framework. In addition, a [Trusted Issuers List API](https://github.com/FIWARE/trusted-issuers-list/blob/main/api/trusted-issuers-list.yaml) to manage the issuers is provided.
+The main component to be deployed is the [Fiware Trusted Issuers List](https://github.com/FIWARE/trusted-issuers-list), a service that provides an [EBSI Trusted Issuers Registry](https://hub.ebsi.eu/#/) implementation to act as the Trusted-List-Service in the DSBA Trust and IAM Framework. In addition, a [Trusted Issuers List API](https://github.com/FIWARE/trusted-issuers-list/blob/main/api/trusted-issuers-list.yaml) to manage the issuers in the data space.
 
 ## Step10: _Deploy the Helm trustAnchor helm chart_
 1. Deployment of the trustAnchor Helm chart.
