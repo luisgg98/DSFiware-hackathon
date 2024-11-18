@@ -51,6 +51,7 @@ ROUTE_TIR_JSON='{
 # https://fiwaredsc-consumer.ita.es/.well-known/did.json
 ROUTE_DID_WEB_fiwaredsc_consumer_ita_es='{
   "uri": "/.well-known/did.json",
+  "name": "Did.web"
   "host": "fiwaredsc-consumer.ita.es",
   "methods": ["GET"],
   "upstream": {
@@ -80,8 +81,52 @@ ROUTE_CONSUMER_KEYCLOAK_fiwaredsc_consumer_ita_es='{
   }
 }'
 
+# https://fiwaredsc-wallet.ita.es/
+ROUTE_WALLET_fiwaredsc_wallet_ita_es='{
+  "uri": "/*",
+  "name": "Wallet",
+  "methods": [
+    "GET",
+    "POST",
+    "PUT",
+    "HEAD",
+    "CONNECT",
+    "OPTIONS",
+    "PATCH",
+    "DELETE"
+  ],
+  "host": "fiwaredsc-wallet.ita.es",
+  "upstream": {
+    "nodes": [
+      {
+        "host": "wallet.consumer.svc.cluster.local",
+        "port": 3000,
+        "weight": 1
+      }
+    ],
+    "timeout": {
+      "connect": 6,
+      "send": 6,
+      "read": 6
+    },
+    "type": "roundrobin",
+    "scheme": "http",
+    "pass_host": "pass",
+    "keepalive_pool": {
+      "idle_timeout": 60,
+      "requests": 1000,
+      "size": 320
+    }
+  },
+  "status": 1
+}' 
+
+## management area
+
 curl -i -X POST -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN" \
--d "$ROUTE_CONSUMER_KEYCLOAK_fiwaredsc_consumer_ita_es"
+-d "$ROUTE_WALLET_fiwaredsc_wallet_ita_es"
+# curl -i -X POST -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN" \
+# -d "$ROUTE_CONSUMER_KEYCLOAK_fiwaredsc_consumer_ita_es"
 # curl -i -X POST -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN" \
 # -d "$ROUTE_DID_WEB_fiwaredsc_consumer_ita_es"
 # curl -i -X POST -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN" \
@@ -104,7 +149,7 @@ curl -i -X POST -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-
 #     -d "$ROUTE_DEMO_JSON"
 
 # Get routes
-curl -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN"
+# curl -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN"
 
 # Detele a route
-# curl -i -X DELETE -k -H "X-API-KEY:$ADMINTOKEN" https://$IP_APISIXCONTROL:9180/apisix/admin/routes/00000000000000000033
+# curl -i -X DELETE -k -H "X-API-KEY:$ADMINTOKEN" https://$IP_APISIXCONTROL:9180/apisix/admin/routes/00000000000000000244

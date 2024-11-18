@@ -7,9 +7,9 @@ DS infrastructure to be deployed at the 241126-27 Nov Hackathon of Madrid (ITA,C
   - [Deployment of the Verifiable Data Registry components (Trust-Anchor)](#deployment-of-the-verifiable-data-registry-components-trust-anchor)
   - [Consumer's infrastructure](#consumers-infrastructure)
 
-## [_Install the tools to ease the life during deployment_](./assets/docs/README-before2begin.md)
+## [_Install the tools to ease the life during deployment_](./assets/docs/README-preparationGuide.md)
 This section installs the components to be used during the deployment of the components.  
-See the [Before to begin guide](./assets/docs/README-before2begin.md)
+See the [Preparation Guide guide](./assets/docs/README-preparationGuide.md)
 
 ## [Deployment of apisix as proxy](./assets/docs/README-apisix.md)
 This section describes the steps to test the kubernetes environment while deploying the Apisix Gateway.  

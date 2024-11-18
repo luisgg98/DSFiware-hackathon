@@ -17,7 +17,9 @@
     - [Roles](#roles)
     - [Users Registered](#users-registered)
   - [Step3.5-Issuance of VCs](#step35-issuance-of-vcs)
-    - [Issue VCs through a M2M flow](#issue-vcs-through-a-m2m-flow)
+    - [Issue VCs through a M2M flow (Using API Rest calls)](#issue-vcs-through-a-m2m-flow-using-api-rest-calls)
+    - [Issue VCs using a browser](#issue-vcs-using-a-browser)
+  - [Bottom line](#bottom-line)
 
 Any participant willing to consume services provided by the data space will require a minimum infrastructure that will enable the management of Verifiable Credentials besides a Decentralized Identifier that will constitue the signing mechanism to authenticate any message, any request made by the consumer.   
 This section describes the steps and the components to be deployed.  
@@ -305,7 +307,7 @@ The Keycloak UI allows the management of users for this Realm, but this deployme
 
 ## Step3.5-Issuance of VCs
 Once the infrastructure has been validated, Keycloak can be used as a VCIssuer. 
-### Issue VCs through a M2M flow
+### Issue VCs through a M2M flow (Using API Rest calls)
 This step is the first step of the _Life of a Verifiable Credential_ described at the [www.w3.org vc-data-model](https://www.w3.org/TR/vc-data-model/#lifecycle-details) and as the w3 specification does not describe how a VC has to be issued, the flow here used is based on the [OpenID for Verifiable Credentials Issuance specification](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html). 
 
 <p style="text-align:center;font-style:italic;font-size: 75%"><img src="./../images/VCIssuance-VC.png"><br/>
@@ -422,3 +424,12 @@ VERIFIABLE_CREDENTIAL=jsonResponse["credential"]
 ```
 
 This VC will be later used to access the Data Space.
+
+### Issue VCs using a browser
+It has not been possible to fully document this issuance mechanism due to incompatibilities between the Keycloak version and the VCWallet used. It will be described as soon as the proper software versions are tested.
+
+
+## Bottom line
+The deployment of the consumer components enable the issuance of Verifiable Credentials, although some issue is still opened. At this stage, the Fiware Data Space architecture deployed looks like:
+   <p style="text-align:center;font-style:italic;font-size: 75%"><img src="./../images/Fiware-DataSpaceGlobalArch-phase03.png"><br/>
+    Deployed architecture after phase 2 completed</p>

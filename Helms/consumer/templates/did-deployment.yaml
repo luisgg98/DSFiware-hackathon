@@ -8,6 +8,7 @@
 {{ $outputFolder := default "/cert" .Values.did.outputFolder }}
 {{ $pfxSecret := default "did-secret" .Values.did.secretName }}
 {{ $pfxSecretKeyField := default "store-pass" .Values.did.pfx.secretKeyField }}
+{{ $pfxAlias := .Values.did.pfx.alias }}
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -61,7 +62,7 @@ spec:
                   name: {{ $pfxSecret }}
                   key: {{ $pfxSecretKeyField }}
             - name: PFX_ALIAS
-              value: {{ (.Values.did).pfx.alias }}
+              value: {{ $pfxAlias }}
             {{ else }} # did type = key
             - name: COUNTRY
               value: {{ .Values.did.cert.country }}

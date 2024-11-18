@@ -1,3 +1,4 @@
 Helms/**/charts/*.tgz
 .tmp/*
 tmp/*
+cert.pfx

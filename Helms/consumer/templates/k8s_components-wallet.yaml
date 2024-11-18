@@ -1,0 +1,77 @@
+{{- if (.Values.vcwallet).enabled }}
+apiVersion: v1
+kind: List
+metadata:
+  resourceVersion: ""
+items:
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: wallet
+      name: wallet
+      namespace: {{ $.Release.Namespace | quote }}
+    spec:
+      ports:
+        - port: 3000
+          name: node
+          protocol: TCP
+          targetPort: 3000
+      selector:
+        app: wallet
+
+  - apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: wallet
+      name: wallet
+      namespace: {{ $.Release.Namespace | quote }}
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: wallet
+      strategy: {}
+      template:
+        metadata:
+          creationTimestamp: null
+          labels:
+            app: wallet
+        spec:
+          containers:
+            - image: vcwallet:01.00.00
+              name: wallet
+              ports:
+                - containerPort: 3000
+              env:
+  #             resources: {}
+
+  # - kind: Ingress
+  #   apiVersion: networking.k8s.io/v1
+  #   metadata:
+  #     generation: 1
+  #     name: wallet
+  #     namespace: {{ $.Release.Namespace | quote }}
+  #   spec:
+  #     ingressClassName: nginx
+  #     rules:
+  #       - host: fiwaredsc-wallet.ita.es
+  #         http:
+  #           paths:
+  #             - backend:
+  #                 service:
+  #                   name: wallet
+  #                   port:
+  #                     number: 3000
+  #               path: /
+  #               pathType: Prefix
+  #     tls:
+  #       - hosts:
+  #           - fiwaredsc-wallet.ita.es
+  #         secretName: fiwaredsc-keycloak.ita.es-tls
+  #   # status:
+  #   #   loadBalancer:
+  #   #     ingress:
+  #   #       - ip: 193.144.226.88
+{{- end }}

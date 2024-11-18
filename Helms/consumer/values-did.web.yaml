@@ -1,3 +1,6 @@
+vcwallet:
+  enabled: true
+
 utils:
   enabled: true
   echo:
@@ -44,7 +47,7 @@ keycloak:
     # primary:
       # initContainers:
       #   - name: change-folder-ownership
-      #     image: docker.io/bitnami/keycloak:26.0.1
+      #     image: docker.io/bitnami/keycloak:26.0.5
       #     imagePullPolicy: IfNotPresent
       #     command:
       #       - /bin/bash
@@ -91,7 +94,7 @@ keycloak:
   image:
     registry: docker.io
     repository: bitnami/keycloak
-    tag: 26.0.1
+    tag: 26.0.5
   auth:
     adminUser: admin
     existingSecret: consumer-keycloak
@@ -121,7 +124,7 @@ keycloak:
     - name: KEYCLOAK_LOG_LEVEL
       value: DEBUG
     - name: KEYCLOAK_EXTRA_ARGS
-      value: "--import-realm --hostname https://fiwaredsc-consumer.ita.es"
+      value: "--import-realm --hostname https://fiwaredsc-consumer.ita.es --verbose"
     - name: KC_FEATURES
       value: "oid4vc-vci,account"
     - name: KEYCLOAK_ADMIN
@@ -132,7 +135,7 @@ keycloak:
           name: did-secret    # did.pfx.secretName
           key: store-pass     # did.pfx.secretKeyField
     - name: PFXFILE           # /did-material/{did.pfx.fileName}
-      value: /did-material/cert.pfx     
+      value: /did-material/cert.pfx
     - name: KEY_ALIAS         # did.pfx.alias
       value: ita.es 
   extraVolumeMounts:
