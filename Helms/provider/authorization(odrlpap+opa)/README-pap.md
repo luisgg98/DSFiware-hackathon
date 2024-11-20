@@ -1,0 +1,3 @@
+[Fiware ODRL-PAP](https://github.com/wistefan/odrl-pap/tree/4349325e562a775d8ecda914d7c3d30d966c9a92)
+The ODRL-PAP allows to configure policies written in [ODRL](https://www.w3.org/TR/odrl-model/) to be consumed by the [Open Policy Agent(OPA)](https://www.openpolicyagent.org/). Therefor it translates the ODRL in to [rego](https://www.openpolicyagent.org/docs/latest/policy-language/) equivalents and offers them via the [bundles-endpoint](https://www.openpolicyagent.org/docs/latest/management-bundles/).  
+- The [rego.methods-folder](https://github.com/wistefan/odrl-pap/tree/main/src/main/resources/rego) contains the initial set of methods. It can be overwritten by providing methods in a folder at paths.rego

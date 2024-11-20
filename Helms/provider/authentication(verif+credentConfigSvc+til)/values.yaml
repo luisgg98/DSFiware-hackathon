@@ -1,31 +1,3 @@
-utils:
-  enabled: true
-
-# -- configuration for the did-helper, should only be used for demonstrational deployments, 
-# see https://hub.docker.com/repository/docker/itainnovaprojects/ita-didweb-generator/general
-did:
-  enabled: true
-  type: web
-  port: 3000
-  pfx:
-    fileName: cert.pfx
-    alias: ita.es
-    secretName: did-secret
-    secretKeyField: store-pass
-  serviceType: ClusterIP
-  baseURL: https://fiwaredsc-provider.ita.es
-  outputFolder: /cert
-  cert:
-    country: es
-    state: ES-AR
-    locality: Zaragoza
-    organization: ITA
-    commonName: www.fiwaredsc-provider.ita.es
-    organizationunit: it
-  ingress:
-    enabled: false
-    host: fiwaredsc-provider.ita.es
-
 # -- configuration for the mysql to be deployed as part of the connector, see https://github.com/bitnami/charts/tree/main/bitnami/mysql for all options
 mysql:
   # -- should it be enabled? set to false if one outside the chart is used.

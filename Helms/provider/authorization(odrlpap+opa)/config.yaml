@@ -1,0 +1,58 @@
+name: provider-authorization
+chart: ./
+valueFile: ./values.yaml
+namespace: provider
+
+# Apache Apisix (api6)
+# Accessible URLS:
+# apisix.Service: echo-svc:8080                curl https://fiwaredsc.ita.es/helloApisix
+# apisix.Service: provider-vcverifier:3000     curl https://fiwaredsc-service1.ita.es/.well-known/openid-configuration
+# apisix.Service: dsconfig:3002 (ds=dataspace) curl https://fiwaredsc-service1.ita.es/.well-known/data-space-configuration
+# apisix.Service: orion-ngsild:1026            curl https://fiwaredsc.ita.es/ngsi-ld/v1/entities?type=Building
+# apisix.Service: scorpio:9090                 curl https://fiwaredsc.ita.es/ngsi-ld/v1/entities?type=EnergyReport
+#
+# Policy Access Point
+# Policy management based on ODRL
+# https://www.youtube.com/watch?v=hm5qMlhpK0g
+# min 27.45: Translates policies from ODRL to rego (used by the PDP)
+# Internal: curl http://odrl-pap.provider.svc.cluster.local:8080/policy
+# Internal: 
+# curl -s -X 'POST' http://odrl-pap.provider.svc.cluster.local:8080/policy \
+#     -H 'Content-Type: application/json' \
+#     -d  '{ 
+#             "@context": {
+#               "dc": "http://purl.org/dc/elements/1.1/",
+#               "dct": "http://purl.org/dc/terms/",
+#               "owl": "http://www.w3.org/2002/07/owl#",
+#               "odrl": "http://www.w3.org/ns/odrl/2/",
+#               "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+#               "skos": "http://www.w3.org/2004/02/skos/core#"
+#             },
+#             "@id": "https://mp-operation.org/policy/common/type",
+#             "@type": "odrl:Policy",
+#             "odrl:permission": {
+#               "odrl:assigner": {
+#                 "@id": "https://www.mp-operation.org/"
+#               },
+#               "odrl:target": {
+#                 "@type": "odrl:AssetCollection",
+#                 "odrl:source": "urn:asset",
+#                 "odrl:refinement": [
+#                   {
+#                     "@type": "odrl:Constraint",
+#                     "odrl:leftOperand": "ngsi-ld:entityType",
+#                     "odrl:operator": {
+#                       "@id": "odrl:eq"
+#                     },
+#                     "odrl:rightOperand": "EnergyReport"
+#                   }
+#                 ]
+#               },
+#               "odrl:assignee": {
+#                 "@id": "vc:any"
+#               },
+#               "odrl:action": {
+#                 "@id": "odrl:read"
+#               }
+#             }
+#           }'

@@ -1,0 +1,4 @@
+name: provider-common
+chart: 
+valueFile: values.yaml
+namespace: provider

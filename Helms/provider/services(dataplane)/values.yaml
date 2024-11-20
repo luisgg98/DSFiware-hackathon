@@ -1,0 +1,167 @@
+postgis:
+  # This is a postgreSQL supporting geospatial data
+  enabled: true
+  # -- overrides the generated name, provides stable service names - this should be avoided if multiple instances are available in the same namespace
+  fullnameOverride: postgis
+  # -- overrides the generated name, provides stable service names - this should be avoided if multiple instances are available in the same namespace
+  nameOverride: postgis
+  generatePasswords:
+    # -- should a password for the database be generated in the cluster
+    enabled: true
+    secretName: postgis-secret
+  auth:
+    # .generatePasswords.secretName
+    existingSecret: postgis-secret
+    secretKeys:
+      adminPasswordKey: postgres-admin-password
+      userPasswordKey: postgres-user-password
+  ## configuration of the postgres primary replicas
+  primary:
+    ## provide db initialization
+    initdb:
+      ## provide scripts for initialization
+      scripts:
+        # -- enable the postgis extension and create the database as expected by scorpio
+        enable.sh: |
+          psql postgresql://postgres:${POSTGRES_PASSWORD}@localhost:5432 -c "CREATE EXTENSION postgis;"
+          psql postgresql://postgres:${POSTGRES_PASSWORD}@localhost:5432 -c "CREATE DATABASE ngb;"
+    persistence:
+      size: 2Gi
+      accessModes: 
+      - ReadWriteOnce
+
+scorpio:
+  enabled: false
+  fullnameOverride: ds-scorpio
+
+  ## configuration of the image to be used
+  env:
+    LOG_LEVEL: DEBUG
+  image:
+    # -- repository to be used - resource friendly all-in-one-runner without kafka
+    repository: scorpiobroker/all-in-one-runner
+    # -- tag of the image to be used - latest java image without kafka
+    tag: java-4.1.11
+  ## configuration of the database to be used by broker
+  db:
+    # -- host of the db
+    dbhost: postgis
+    # -- username to be used
+    user: postgres
+    existingSecret:
+      enabled: true
+      name: postgis-secret
+      key: postgres-admin-password
+  ## configuration of the readiness probe
+  readinessProbe:
+    # -- path to be used for the readiness probe, older versions used /actuator/health
+    path: /q/health
+  ## configuration of the liveness probe
+  livenessProbe:
+    # -- path to be used for the readiness probe, older versions used /actuator/health
+    path: /q/health
+  ## configuration to be used for the service offered by scorpio
+  service:
+    # -- ClusterIP is the recommended type for most clusters
+    type: ClusterIP
+  # -- configuration to register the dataplane at the credentials-config-service
+  ccs:
+    defaultOidcScope:
+        name: default
+    # -- endpoint of the ccs to regsiter at
+    endpoint: http://credentials-config-service:8080
+    # -- configmap to get the registration information from
+    configMap: scorpio-registration
+    # -- service id of the data-service to be used
+    id: data-service
+    
+    oidcScopes:
+      default:
+        - type: UserCredential
+          trustedParticipantsLists:
+            - http://tir.trust-anchor.svc.cluster.local:8080
+          trustedIssuersLists:
+            - http://trusted-issuers-list.provider.svc.cluster.local:8080
+      operator:
+        - type: OperatorCredential
+          trustedParticipantsLists:
+            - http://tir.trust-anchor.svc.cluster.local:8080
+          trustedIssuersLists:
+            - http://trusted-issuers-list.provider.svc.cluster.local:8080
+
+
+  # -- additional init containers to be used for the dataplane
+  initContainers:
+    # -- curl container to register at the credentials config service
+    - name: register-credential-config
+      image: quay.io/curl/curl:8.1.2
+      command: [ "/bin/sh", "-c", "/bin/init.sh" ]
+      volumeMounts:
+        - name: scorpio-registration
+          mountPath: /bin/init.sh
+          subPath: init.sh
+  # -- additonal volumes to be mounted for the dataplane
+  additionalVolumes:
+    - name: scorpio-registration
+      configMap:
+        name: scorpio-registration
+        defaultMode: 0755
+
+  initData:
+    initEnabled: true
+    hookDeletePolicy: before-hook-creation
+    numberDeploymentTries: 40
+    entities:
+      # Once deployed, this curl from inside should work:
+      # curl -X GET http://scorpio:1026/ngsi-ld/v1/entities?type=Building
+      # Or this one from outside
+      - name: entity001.json
+        data: |
+          {
+            "id": "urn:ngsi-ld:Building:barn001",
+            "type": "Building",
+            "category": {
+              "type": "Property",
+                "value": ["barn"]
+            },
+            "address": {
+                "type": "Property",
+                "value": {
+                    "streetAddress": "Straße des 17. Juni",
+                    "addressRegion": "Berlin",
+                    "addressLocality": "Tiergarten",
+                    "postalCode": "10557"
+                },
+                "verified": {
+              "type": "Property",
+              "value": true
+            }
+            },
+            "location": {
+                "type": "GeoProperty",
+                "value": {
+                    "type": "Point",
+                      "coordinates": [13.3698, 52.5163]
+                }
+            },
+            "name": {
+                "type": "Property",
+                "value": "Big Red Barn"
+            },
+            "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.6.jsonld"
+          }
+      - name: entity002.json
+        data: |
+          {
+            "id": "urn:ngsi-ld:EnergyReport:fms-1",
+            "type": "EnergyReport",
+            "name": {
+              "type": "Property",
+              "value": "Standard Server"
+            },
+            "consumption": {
+              "type": "Property",
+              "value": "94"
+            },
+            "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.6.jsonld"
+          }

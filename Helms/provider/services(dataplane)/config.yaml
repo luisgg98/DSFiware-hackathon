@@ -1,0 +1,60 @@
+name: services
+chart: 
+valueFile: values.yaml
+namespace: provider
+
+# Access scorpio
+################
+# curl -X GET http://data-service-scorpio.provider.svc.cluster.local:9090/ngsi-ld/v1/entities?type=EnergyReport
+# curl -X POST http://data-service-scorpio.provider.svc.cluster.local:9090/ngsi-ld/v1/entities \
+#     -H 'Content-Type: application/json' \
+#     -d '{
+#       "id": "urn:ngsi-ld:EnergyReport:fms-2",
+#       "type": "EnergyReport",
+#       "name": {
+#         "type": "Property",
+#         "value": "Standard Server"
+#       },
+#       "consumption": {
+#         "type": "Property",
+#         "value": "94"
+#       }
+#     }'
+#
+# Capifast service
+#
+# (Interna) curl http://capifast.provider.svc.cluster.local:8000/
+# {"message":"Welcome to the FastAPI service!"}
+# (internal) curl http://capifast.provider.svc.cluster.local:8000/orders/
+#  {"detail":"Error retrieving orders: 404: No orders found"}
+#  curl POST https://fiwaredsc-service1.ita.es/capifast\
+#     -H 'Content-Type: application/json' \
+#     -d '{
+#     "organization_id": "Pick&goLogistics"
+#     "alias": "Test Order",
+#     "sender_id": "550e8400-e29b-41d4-a716-446655440000",
+#     "sender_name": "Javier",
+#     "receiver_name": "David",
+#     "from_address": {
+#         "country": "Spain",
+#         "city": "Zaragoza",
+#         "street": "Plaza de España 7",
+#         "no": "50820",
+#         "latitude": 41.7175043
+#         "longitude": -0.841321492336033,
+#         "elevation": None
+#     },
+#     "to_address": {
+#         "country": "Spain",
+#         "city": "Zaragoza",
+#         "street": "C/María de Luna",
+#         "no": "7-8",
+#         "latitude": 41.649693,
+#         "longitude": -0.887712,
+#         "elevation": None
+#     },
+#     "volume": 1.0,
+#     "weight": 1.0,
+#     "goods_type": "Goods"
+# }'
+# 

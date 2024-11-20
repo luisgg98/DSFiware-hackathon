@@ -9,7 +9,7 @@
 [Apache APISIX](https://apisix.apache.org/) provides rich traffic management features like extension via plugins, Load Balancing, Dynamic Upstream, Canary Release, Circuit Breaking, Authentication, Observability, etc.
 
 
-The following steps are focused in the deployment of the Helms Chart apisix to install an instance of this open source Apache API Gateway to help you manage the different components of the Fiware Data space. 
+The following steps are focused in the deployment of the Helm Chart apisix to install an instance of this open source Apache API Gateway to help you manage the different components of the Fiware Data space. 
 
 ## Step01: _Deploy a basic version of a helloWorld chart_
 This steps, using the components at the apisix Chart, deploys a basic version of a helloWorld chart (included inside apisix Helm Chart)

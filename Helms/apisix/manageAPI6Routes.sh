@@ -121,11 +121,25 @@ ROUTE_WALLET_fiwaredsc_wallet_ita_es='{
   "status": 1
 }' 
 
-## management area
+# https://fiwaredsc-provider.ita.es/
+ROUTE_PROVIDER_SERVICE_fiwaredsc_provider_ita_es='{
+  "uri": "/*",
+  "host": "fiwaredsc-provider.ita.es",
+  "methods": ["GET", "POST", "PUT", "HEAD", "CONNECT", "OPTIONS", "PATCH", "DELETE"],
+  "upstream": {
+    "type": "roundrobin",
+    "scheme": "http",
+    "nodes": {
+      "utils-echo.provider.svc.cluster.local:8080": 1
+    }
+  }
+}'
 
+## management area
 curl -i -X POST -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN" \
--d "$ROUTE_WALLET_fiwaredsc_wallet_ita_es"
+-d "$ROUTE_PROVIDER_SERVICE_fiwaredsc_provider_ita_es"
 # curl -i -X POST -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN" \
+# -d "$ROUTE_WALLET_fiwaredsc_wallet_ita_es"# curl -i -X POST -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN" \
 # -d "$ROUTE_CONSUMER_KEYCLOAK_fiwaredsc_consumer_ita_es"
 # curl -i -X POST -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN" \
 # -d "$ROUTE_DID_WEB_fiwaredsc_consumer_ita_es"

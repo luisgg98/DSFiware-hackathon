@@ -1,0 +1,122 @@
+# -- configuration for the postgresql to be deployed as part of the connector, see https://github.com/bitnami/charts/tree/main/bitnami/postgresql for all options
+postgresql:
+  enabled: true
+  fullnameOverride: postgresql
+  generatePasswords:
+    # -- should a password for the database be generated in the cluster
+    enabled: true
+    secretName: postgresql-secret
+  auth:
+    # .generatePasswords.secretName
+    existingSecret: postgresql-secret
+    secretKeys:
+      adminPasswordKey: postgres-admin-password
+      userPasswordKey: postgres-user-password
+  # -- configuration for the primary of the db
+  primary:
+    # -- scripts to be run on intialization
+    initdb:
+      scripts:
+        create.sh: |
+          psql postgresql://postgres:${POSTGRES_PASSWORD}@localhost:5432 -c "CREATE DATABASE pap;"
+    persistence:
+      size: 2Gi
+      accessModes: 
+      - ReadWriteOnce
+
+odrl-pap:
+  # -- should it be enabled? set to false if one outside the chart is used.
+  enabled: true
+  # -- allows to set a fixed name for the services
+  fullnameOverride: odrl-pap
+  # -- connection to the database
+  database:
+    # -- url to connect the db at
+    url: jdbc:postgresql://postgresql:5432/pap
+    # -- username to access the db
+    username: postgres
+    # -- secret to take the password from
+    existingSecret:
+      enabled: true
+      name: postgresql-secret
+      key: postgres-admin-password
+  deployment:
+    image:
+      repository: quay.io/fiware/odrl-pap
+      tag: 0.1.4
+      
+# # -- configuration for the open-policy-agent to be deployed as part of the connector fulfilling the role of the PDP, as a sidecar to apisix
+# opa:
+#   # -- should an opa sidecar be deployed to apisix
+#   enabled: true
+#   # -- address of the pap to get the policies from
+#   resourceUrl: http://odrl-pap.provider.svc.cluster.local:8080/bundles/service/v1
+#   # -- port to make opa available at
+#   port: 8181
+#   # -- pull delays for the policies bundle
+#   policies:
+#     minDelay: 2
+#     maxDelay: 4
+#   # -- pull delays for the methods bundle
+#   methods:
+#     minDelay: 1
+#     maxDelay: 3
+#   # -- pull delays for the data bundle
+#   data:
+#     minDelay: 1
+#     maxDelay: 15
+
+# -- configuration for the open-policy-agent to be deployed as part of the connector fulfilling the role of the PDP, as a sidecar to apisix
+opa:
+  enabled: false
+opa_isolated:
+  # -- should an opa be deployed
+  enabled: false
+  # -- we want to deploy the open-policy-agent as a pdp
+  name: open-policy-agent
+  container: 
+    image: openpolicyagent/opa:0.64.1
+    imagePullPolicy: IfNotPresent
+  ports:
+    - name: http
+      containerPort: 8181
+      protocol: TCP
+  # opa should be started to listen at 8181 and get its config from the mounted config yaml
+  args:
+    - "run"
+    - "--ignore=.*"  # exclude hidden dirs created by Kubernetes
+    - "--server"
+    - "-l"
+    - "debug"
+    - "-c"
+    - "/config/opa.yaml"
+    - "--addr"
+    - "0.0.0.0:8181"
+  extraVolumes:
+    - name: opa-config
+      configMap:
+        name: opa-config
+  volumeMounts:
+    - name: opa-config
+      mountPath: /config
+
+  # -- address of the pap to get the policies from
+  config:
+    debug: true
+    default_decision: /policy/main/deny
+    resourceUrl: http://odrl-pap.provider.svc.cluster.local:8080/bundles/service/v1
+    # -- port to make opa available at
+    port: 8181
+    diagnostic_port: 8282
+    # -- pull delays for the policies bundle
+    policies:
+      minDelay: 2
+      maxDelay: 4
+    # -- pull delays for the methods bundle
+    methods:
+      minDelay: 1
+      maxDelay: 3
+    # -- pull delays for the data bundle
+    data:
+      minDelay: 1
+      maxDelay: 15

@@ -1,0 +1,23 @@
+apiVersion: v2
+type: application
+name: services
+version: 1.0.0
+appVersion: 1.0.0
+kubeVersion: ">= 1.19-0"
+description: A Helm chart to deploy the DSFiware-hackathon services
+keywords:
+  - fiware
+  - scorpio
+dependencies:
+  - name: scorpio-broker-aaio
+    alias: scorpio
+    condition: scorpio.enabled
+    repository: https://fiware.github.io/helm-charts
+    version: 0.4.7
+    tags:
+      - scorpio
+  - name: postgresql
+    alias: postgis
+    condition: postgis.enabled
+    repository: oci://registry-1.docker.io/bitnamicharts
+    version: 13.1.5

@@ -1,0 +1,70 @@
+utils:
+  enabled: true
+  echo:
+    enabled: true
+
+# -- configuration for the did-helper, should only be used for demonstrational deployments, 
+# see https://hub.docker.com/repository/docker/itainnovaprojects/ita-didweb-generator/general
+did:
+  enabled: true
+  type: web
+  port: 3000
+  pfx:
+    fileName: cert.pfx
+    alias: ita.es
+    secretName: did-secret
+    secretKeyField: store-pass
+  serviceType: ClusterIP
+  baseURL: https://fiwaredsc-provider.ita.es
+  outputFolder: /cert
+  cert:
+    country: es
+    state: ES-AR
+    locality: Zaragoza
+    organization: ITA
+    commonName: www.fiwaredsc-provider.ita.es
+    organizationunit: it
+  ingress:
+    enabled: false
+    host: fiwaredsc-provider.ita.es
+
+# postgis:
+#   # This is a postgreSQL supporting geospatial data
+#   enabled: true
+#   # -- overrides the generated name, provides stable service names - this should be avoided if multiple instances are available in the same namespace
+#   fullnameOverride: postgis
+#   # -- overrides the generated name, provides stable service names - this should be avoided if multiple instances are available in the same namespace
+#   nameOverride: postgis
+#   ## auth configuration for the database
+#   auth:
+#     existingSecret: data-postgis-secret
+#     secretKeys:
+#       adminPasswordKey: postgres-admin-password
+#       userPasswordKey: postgres-user-password
+#   ## configuration of the postgres primary replicas
+#   primary:
+#     ## provide db initialization
+#     initdb:
+#       ## provide scripts for initialization
+#       scripts:
+#         # -- enable the postgis extension and create the database as expected by scorpio
+#         enable.sh: |
+#           psql postgresql://postgres:${POSTGRES_PASSWORD}@localhost:5432 -c "CREATE EXTENSION postgis;"
+#           psql postgresql://postgres:${POSTGRES_PASSWORD}@localhost:5432 -c "CREATE DATABASE ngb;"
+#     persistence:
+#       size: 3Gi
+#       accessModes: 
+#       - ReadWriteMany
+
+# dataSpaceConfig:
+#   enabled: true
+#   serviceType: ClusterIP
+#   port: 3002
+#   supportedModels:
+#     - "https://raw.githubusercontent.com/smart-data-models/dataModel.Consumption/master/ConsumptionPoint/schema.json"
+#     - "https://raw.githubusercontent.com/smart-data-models/dataModel.Consumption/master/ConsumptionCost/schema.json"
+#   supportedProtocols:
+#     - http
+#     - https
+#   authenticationProtocols:
+#     - oid4vp

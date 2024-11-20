@@ -1,0 +1,9 @@
+dependencies:
+- name: scorpio-broker-aaio
+  repository: https://fiware.github.io/helm-charts
+  version: 0.4.7
+- name: postgresql
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 13.1.5
+digest: sha256:4f708cfa4a576bbfdcbb5b398bdf1d6f4e347280f9a529c26815a66ba36c6a46
+generated: "2024-11-19T15:03:20.398748892+01:00"

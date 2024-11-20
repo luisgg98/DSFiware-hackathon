@@ -1,0 +1,9 @@
+dependencies:
+- name: odrl-pap
+  repository: https://fiware.github.io/helm-charts/
+  version: 0.0.21
+- name: postgresql
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 13.1.5
+digest: sha256:8a16c9394fe4174dfb039e84efb0f8417d5b380d04166b5fbcfbd779c7dc259b
+generated: "2024-11-20T00:31:06.231638256+01:00"
