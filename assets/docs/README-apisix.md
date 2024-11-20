@@ -160,8 +160,8 @@ If you visit the values file, the secret and the key used to store the dashboard
     You may notice that none of the routes defined at the apisix.yaml file appear here. This is because the dashboard usually displays routes that were created via the Admin API because it directly interacts with APISIX's etcd storage. When you load configuration from a YAML file, APISIX typically treats it as static configuration, so it doesn’t get recorded in etcd in a way that the dashboard can view.  
 
 ## Step4: Use Admin API to manage routes
-Instead of modifying the apisix.yaml file, routes can be managed via Admin API (the deployment **Apisix-control-plane** exposes the endpoints to manage them) or via the dashboard set up at the previous Step.
-In this exercise, using the provided _manageAPI6Routes.ypynb_ or _manageAPI6Routes.sh_ recreate the route /hello using the Admin API:
+Instead of modifying the apisix.yaml file, routes can be managed via Admin API (the deployment **Apisix-control-plane** exposes the endpoints to manage them) or via the dashboard set up at the previous Step.  
+In this exercise, using one of the provided _manageAPI6Routes.ypynb_ or _manageAPI6Routes.sh_ files, recreate the route /hello using the Admin API. These files are at the [/scripts folder](../../scripts/):
 1. If it still exists, delete the /hello route from the apisix.yaml file and redeploy the helm chart
 2. Test the /hello route. Does it work? It should not.
     ```shell

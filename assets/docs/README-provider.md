@@ -5,7 +5,8 @@
     - [Verification of the deployment so far](#verification-of-the-deployment-so-far)
   - [Step4.3- _Deployment of the authorization components_](#step43--deployment-of-the-authorization-components)
   - [Step 4.4- _Deployment of the service components_](#step-44--deployment-of-the-service-components)
-  - [Step 4.5- Adding the service route to the Apisix](#step-45--adding-the-service-route-to-the-apisix)
+  - [Step 4.5- Addition of the service route to the Apisix](#step-45--addition-of-the-service-route-to-the-apisix)
+  - [Bottom line](#bottom-line)
 
     
 The objective of this phase is to deploy the following infrastructure.
@@ -150,7 +151,7 @@ kGet -n service
     postgis-0                     1/1     Running     0          23m
 ```
 
-## Step 4.5- Adding the service route to the Apisix
+## Step 4.5- Addition of the service route to the Apisix
 1. Initially, we are going to modify the apisix values file to enable its management of the new route `fiwaredsc-provider.ita.es` and _upgrade_ the apisix helm chart to just renew the involved components (_apisix-control-plane_)
     ```shell
     hFileCommand api upgrade
@@ -193,4 +194,11 @@ kGet -n service
     The order record shown has been inserted by the job created to initialize the data.
     
   3. Enable the apisix to play the PEP role.
-     Once tested the access of the service *out of the security box the data space provides*, this step is adding a plugin to the service `fiwaredsc-provider.ita.es/ngsi-ld/` route, plugin that will play the PEP (Policy Enforcment Point) role.
+     Once tested the access of the service *out of the security box the data space provides*, this step is adding a plugin to the service `fiwaredsc-provider.ita.es/ngsi-ld/` route, plugin that will play the PEP (Policy Enforcment Point) role.  
+     Next phase will focus in this objective
+
+## Bottom line
+The deployment of the provider components and the coordination with the other blocks leaves the data space ready to be setup and used:
+
+   <p style="text-align:center;font-style:italic;font-size: 75%"><img src="./../images/Fiware-DataSpaceGlobalArch-phase04.png"><br/>
+    Architecture after the provider components deployment is completed</p>
