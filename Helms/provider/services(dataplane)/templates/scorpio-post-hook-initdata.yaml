@@ -1,0 +1,37 @@
+{{- if and (.Values.scorpio).enabled ((.Values.scorpio).initData).initEnabled -}}
+{{- $fullName := include "scorpio.fullname" . -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "scorpio.fullname" . }}-init-data
+  annotations:
+    "helm.sh/hook": {{ default "post-install,post-upgrade" .Values.scorpio.initData.hook }}
+    "helm.sh/hook-delete-policy": {{ default "before-hook-creation" .Values.scorpio.initData.hookDeletePolicy | default "before-hook-creation" }}
+    "helm.sh/hook-weight": "1"
+spec:
+  backoffLimit: {{ default 1 .Values.scorpio.initData.backoffLimit }}
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: {{ include "scorpio.fullname" . }}-init-data
+          image: alpine/curl
+          command:
+            - /bin/sh
+            - /data/entrypoint.sh
+          volumeMounts:
+            - name: scorpio-init-data-volume
+              mountPath: "/data"
+              readOnly: true
+          env:
+            - name: SCORPIO_HOST
+              value: {{ include "scorpio.fullname" . }}
+            - name: SCORPIO_PORT
+              value: {{ include "scorpio.port" . | quote }}
+      volumes:
+        - name: scorpio-init-data-volume
+          projected:
+            sources:
+              - configMap:
+                  name: {{ include "scorpio.fullname" . }}-init-data-cm
+{{- end }}

@@ -1,7 +1,7 @@
 name: services
 chart: 
 valueFile: values.yaml
-namespace: provider
+namespace: service
 
 # Access scorpio
 ################

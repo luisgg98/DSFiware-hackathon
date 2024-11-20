@@ -1,3 +1,6 @@
+utils:
+  enabled: true
+  
 postgis:
   # This is a postgreSQL supporting geospatial data
   enabled: true
@@ -31,7 +34,7 @@ postgis:
       - ReadWriteOnce
 
 scorpio:
-  enabled: false
+  enabled: true
   fullnameOverride: ds-scorpio
 
   ## configuration of the image to be used
@@ -64,12 +67,13 @@ scorpio:
   service:
     # -- ClusterIP is the recommended type for most clusters
     type: ClusterIP
+    # port: 4000
   # -- configuration to register the dataplane at the credentials-config-service
   ccs:
     defaultOidcScope:
         name: default
     # -- endpoint of the ccs to regsiter at
-    endpoint: http://credentials-config-service:8080
+    endpoint: http://cconfig.provider.svc.cluster.local:8080
     # -- configmap to get the registration information from
     configMap: scorpio-registration
     # -- service id of the data-service to be used
@@ -81,7 +85,7 @@ scorpio:
           trustedParticipantsLists:
             - http://tir.trust-anchor.svc.cluster.local:8080
           trustedIssuersLists:
-            - http://trusted-issuers-list.provider.svc.cluster.local:8080
+            - http://til.provider.svc.cluster.local:8080
       operator:
         - type: OperatorCredential
           trustedParticipantsLists:
@@ -118,50 +122,60 @@ scorpio:
       - name: entity001.json
         data: |
           {
-            "id": "urn:ngsi-ld:Building:barn001",
-            "type": "Building",
-            "category": {
-              "type": "Property",
-                "value": ["barn"]
+            "@context": {
+              "dc": "http://purl.org/dc/elements/1.1/",
+              "dct": "http://purl.org/dc/terms/",
+              "owl": "http://www.w3.org/2002/07/owl#",
+              "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+              "skos": "http://www.w3.org/2004/02/skos/core#"
             },
-            "address": {
-                "type": "Property",
-                "value": {
-                    "streetAddress": "Straße des 17. Juni",
-                    "addressRegion": "Berlin",
-                    "addressLocality": "Tiergarten",
-                    "postalCode": "10557"
-                },
-                "verified": {
+            "id": "urn:ngsi-ld:Order:SDBrokerId-Spain.2411331.000003",
+            "type": "Order",
+            "dateCreated": {
               "type": "Property",
-              "value": true
-            }
+              "value": {
+                "@type": "DateTime",
+                "@value": "2022-03-31T13:20:00Z"
+              }
             },
             "location": {
-                "type": "GeoProperty",
-                "value": {
-                    "type": "Point",
-                      "coordinates": [13.3698, 52.5163]
-                }
+              "type": "GeoProperty",
+              "value": {
+                "type": "Point",
+                "coordinates": [
+                  50.832967,
+                  43.811340
+                ]
+              }
             },
-            "name": {
-                "type": "Property",
-                "value": "Big Red Barn"
+            "mode":{
+              "value": "delivery"
             },
-            "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.6.jsonld"
-          }
-      - name: entity002.json
-        data: |
-          {
-            "id": "urn:ngsi-ld:EnergyReport:fms-1",
-            "type": "EnergyReport",
-            "name": {
+            "refHub": {
+              "type": "Relationship",
+              "object": "urn:ngsi-ld:Hub:Hub-00001"
+            },
+            "earlyTime":{
               "type": "Property",
-              "value": "Standard Server"
+              "value": {
+                "@type": "DateTime",
+                "@value": "2024-10-08T07:00:00.00Z"
+              }
             },
-            "consumption": {
+            "lateTime":{
               "type": "Property",
-              "value": "94"
+              "value": {
+                "@type": "DateTime",
+                "@value": "2024-10-08T09:00:00.00Z"
+              }
             },
-            "@context": "https://uri.etsi.org/ngsi-ld/v1/ngsi-ld-core-context-v1.6.jsonld"
+            "numberItems": {
+              "type": "Property",
+              "value": 3
+            },
+            "weight": {
+              "type": "Property",
+              "value": 30.3,
+              "unitCode": "KGM"
+            }
           }

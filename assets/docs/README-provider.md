@@ -6,7 +6,6 @@
   - [Step4.3- _Deployment of the authorization components_](#step43--deployment-of-the-authorization-components)
   - [Step 4.4- _Deployment of the service components_](#step-44--deployment-of-the-service-components)
   - [Step 4.5- Adding the service route to the Apisix](#step-45--adding-the-service-route-to-the-apisix)
-    - [Step 4.2.2- Redirect requests to the real Scorpio service](#step-422--redirect-requests-to-the-real-scorpio-service)
 
     
 The objective of this phase is to deploy the following infrastructure.
@@ -112,14 +111,44 @@ The diagram shows the interactions on this block. In it, the _Administrator_ is 
 On the other side, requests to access the provider's data or services made by the _user_ are forwarded to the OPA to evaluate if they are authorized based on the ODRL policies.  
 Finally, the request is forwarded to the requested endpoint or rejected.
 
+
+```shell
+hFileCommand provider/authorization
+    # Running CMD=[helm -n provider install -f "./Helms/provider/authorization(odrlpap+opa)/./values.yaml" provider-authorization "./Helms/provider/authorization(odrlpap+opa)/./"  --create-namespace]
+kGet -n provider
+    #   Running command [kubectl get pod  -n provider  ]
+    # Showing pod in namespace [provider]
+    NAME                              READY   STATUS    RESTARTS      AGE
+    cconfig-6f88d6f88f-fd65f          1/1     Running   2 (10h ago)   10h
+    did-web-7789dd6dc7-8h477          1/1     Running   0             10h
+    mysql-0                           1/1     Running   0             10h
+    odrl-pap-588c44bc47-nsw47         1/1     Running   0             11h
+    postgresql-0                      1/1     Running   0             11h
+    til-5bb9996596-h5wq8              1/1     Running   2 (10h ago)   10h
+    verifier-64965b55f9-w4762         1/1     Running   0             10h
+```
+
 ## Step 4.4- _Deployment of the service components_
 This Helm chart will deploy the following components:
+
 <p style="text-align:center;font-style:italic;font-size: 75%"><img src="./../images/provider-components-services.png"><br/>
     Service components (Will vary depending on the offered services)</p>
 
 - **Target Service**: This walkthrough will deploy a [Context Data broker Scorpio](https://scorpio.readthedocs.io/en/latest/) to provide NGSI-LD data access. The DNS `fiwaredsc-provider.ita.es` will route requests to this service.  
 - A **Postgis DB server** to support the storage of the NGSI-LD records. Postgis is used by the Scorpio Context Broker as it can manage spatial data.
+- A **Job to initialize data**: In this scenario, it just inserts some data into de Scorpio CB
   
+```shell
+hFileCommand provider/service
+    # Running CMD=[helm -n service install -f "./Helms/provider/services(dataplane)/values.yaml" services "./Helms/provider/services(dataplane)/"  --create-namespace]
+kGet -n service
+    #   Running command [kubectl get pod  -n service  ]
+    # Showing pod in namespace [service]
+    NAME                          READY   STATUS      RESTARTS   AGE
+    ds-scorpio-57889c6cc8-95ht7   1/1     Running     0          23m
+    ds-scorpio-init-data-42kqk    0/1     Completed   0          21m
+    postgis-0                     1/1     Running     0          23m
+```
 
 ## Step 4.5- Adding the service route to the Apisix
 1. Initially, we are going to modify the apisix values file to enable its management of the new route `fiwaredsc-provider.ita.es` and _upgrade_ the apisix helm chart to just renew the involved components (_apisix-control-plane_)
@@ -128,42 +157,40 @@ This Helm chart will deploy the following components:
       # Running CMD=[helm -n apisix upgrade -f "./Helms/apisix/values.yaml" apisix "./Helms/apisix/"  --create-namespace]
     ```
 2. Add a new route to the service
-   As the Scorpio has not yet been deployed, the route can be added to redirect the requests to https://fiwaredsc-consumer.ita.es to the demo pod 'echo'
+   We are going to redirect the requests to https://fiwaredsc-consumer.ita.es to the scorpio context broker
     ```json
-    # https://fiwaredsc-provider.ita.es/
+    # https://fiwaredsc-provider.ita.es/ngsi-ld/...
     ROUTE_PROVIDER_SERVICE_fiwaredsc_provider_ita_es='{
-      "uri": "/*",
+      "uri": "/ngsi-ld/*",
+      "name": "service",
       "host": "fiwaredsc-provider.ita.es",
       "methods": ["GET", "POST", "PUT", "HEAD", "CONNECT", "OPTIONS", "PATCH", "DELETE"],
       "upstream": {
         "type": "roundrobin",
         "scheme": "http",
         "nodes": {
-          "utils-echo.provider.svc.cluster.local:8080": 1
+          "ds-scorpio.service.svc.cluster.local:9090": 1
+        }
+      },
+      "plugins": {
+        "proxy-rewrite": {
+            "regex_uri": ["^/ngsi-ld/(.*)", "/ngsi-ld/$1"]
         }
       }
     }'
     ```
 
-  ```shell
-  curl https://fiwaredsc-provider.ita.es
-        Hostname: utils-echo-6ff8f87546-rwpkm
-
-        Pod Information:
-                node name:      v22088
-                pod name:       utils-echo-6ff8f87546-rwpkm
-                pod namespace:  provider
-                pod IP: 172.17.0.23
-
-        Server values:
-                server_version=nginx: 1.12.2 - lua: 1001
+    ```shell
+    # Test the service
+    curl https://fiwaredsc-provider.ita.es/ngsi-ld/v1/entities?type=Order
+        [ {
+          "id" : "urn:ngsi-ld:Order:SDBrokerId-Spain.2411331.000003",
+          "type" : "Order",
+          "dateCreated" : {
+            "type" : "Property",
         ...
-  ```
-### Step 4.2.2- Redirect requests to the real Scorpio service
-The deployment of the Scorpio is isolated from the authorization components to keep the modularity of the arquitecture. In real scenarios, this helm chart can easily be replaced by the real provider's services.
-
-```shell
-hFileCommand provider/authorization
-    # Running CMD=[helm -n provider install -f "./Helms/provider/authorization(odrlpap+opa)/./values.yaml" provider-authorization "./Helms/provider/authorization(odrlpap+opa)/./"  --create-namespace]
-kGet -w
-```
+    ```
+    The order record shown has been inserted by the job created to initialize the data.
+    
+  3. Enable the apisix to play the PEP role.
+     Once tested the access of the service *out of the security box the data space provides*, this step is adding a plugin to the service `fiwaredsc-provider.ita.es/ngsi-ld/` route, plugin that will play the PEP (Policy Enforcment Point) role.

@@ -70,6 +70,7 @@ ROUTE_DID_WEB_fiwaredsc_consumer_ita_es='{
 # https://fiwaredsc-consumer.ita.es/
 ROUTE_CONSUMER_KEYCLOAK_fiwaredsc_consumer_ita_es='{
   "uri": "/*",
+  "name": "consumer",
   "host": "fiwaredsc-consumer.ita.es",
   "methods": ["GET", "POST", "PUT", "HEAD", "CONNECT", "OPTIONS", "PATCH", "DELETE"],
   "upstream": {
@@ -121,23 +122,29 @@ ROUTE_WALLET_fiwaredsc_wallet_ita_es='{
   "status": 1
 }' 
 
-# https://fiwaredsc-provider.ita.es/
+# https://fiwaredsc-provider.ita.es/ngsi-ld/
 ROUTE_PROVIDER_SERVICE_fiwaredsc_provider_ita_es='{
-  "uri": "/*",
+  "uri": "/ngsi-ld/*",
+  "name": "service",
   "host": "fiwaredsc-provider.ita.es",
   "methods": ["GET", "POST", "PUT", "HEAD", "CONNECT", "OPTIONS", "PATCH", "DELETE"],
   "upstream": {
     "type": "roundrobin",
     "scheme": "http",
     "nodes": {
-      "utils-echo.provider.svc.cluster.local:8080": 1
+      "ds-scorpio.service.svc.cluster.local:9090": 1
+    }
+  },
+  "plugins": {
+    "proxy-rewrite": {
+        "regex_uri": ["^/ngsi-ld/(.*)", "/ngsi-ld/$1"]
     }
   }
 }'
 
 ## management area
-curl -i -X POST -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN" \
--d "$ROUTE_PROVIDER_SERVICE_fiwaredsc_provider_ita_es"
+# curl -i -X POST -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN" \
+# -d "$ROUTE_PROVIDER_SERVICE_fiwaredsc_provider_ita_es"
 # curl -i -X POST -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN" \
 # -d "$ROUTE_WALLET_fiwaredsc_wallet_ita_es"# curl -i -X POST -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN" \
 # -d "$ROUTE_CONSUMER_KEYCLOAK_fiwaredsc_consumer_ita_es"
@@ -158,9 +165,9 @@ curl -i -X POST -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-
 # curl -k https://fiwaredsc-consumer.local/hello
 
 # Fix the route
-# curl -i -X PUT -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes/00000000000000000033 \
-#     -H "X-API-KEY:$ADMINTOKEN" \
-#     -d "$ROUTE_DEMO_JSON"
+curl -i -X PUT -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes/00000000000000000269 \
+    -H "X-API-KEY:$ADMINTOKEN" \
+    -d "$ROUTE_PROVIDER_SERVICE_fiwaredsc_provider_ita_es"
 
 # Get routes
 # curl -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN"
