@@ -1,0 +1,12 @@
+{{- if ((.Values.opa).enabled) }}
+apiVersion: v1
+kind: ConfigMap
+metadata: 
+  name: opa-config
+  namespace: {{ $.Release.Namespace | quote }}
+  labels:
+    app: opa
+data:
+  opa.yaml: |-
+    {{ .Values.opa.opa | toYaml | nindent 4 }}
+{{- end }}

@@ -45,78 +45,108 @@ odrl-pap:
       repository: quay.io/fiware/odrl-pap
       tag: 0.1.4
       
-# # -- configuration for the open-policy-agent to be deployed as part of the connector fulfilling the role of the PDP, as a sidecar to apisix
-# opa:
-#   # -- should an opa sidecar be deployed to apisix
-#   enabled: true
-#   # -- address of the pap to get the policies from
-#   resourceUrl: http://odrl-pap.provider.svc.cluster.local:8080/bundles/service/v1
-#   # -- port to make opa available at
-#   port: 8181
-#   # -- pull delays for the policies bundle
-#   policies:
-#     minDelay: 2
-#     maxDelay: 4
-#   # -- pull delays for the methods bundle
-#   methods:
-#     minDelay: 1
-#     maxDelay: 3
-#   # -- pull delays for the data bundle
-#   data:
-#     minDelay: 1
-#     maxDelay: 15
-
-# -- configuration for the open-policy-agent to be deployed as part of the connector fulfilling the role of the PDP, as a sidecar to apisix
 opa:
-  enabled: false
-opa_isolated:
-  # -- should an opa be deployed
-  enabled: false
-  # -- we want to deploy the open-policy-agent as a pdp
-  name: open-policy-agent
-  container: 
-    image: openpolicyagent/opa:0.64.1
-    imagePullPolicy: IfNotPresent
-  ports:
-    - name: http
-      containerPort: 8181
-      protocol: TCP
-  # opa should be started to listen at 8181 and get its config from the mounted config yaml
-  args:
-    - "run"
-    - "--ignore=.*"  # exclude hidden dirs created by Kubernetes
-    - "--server"
-    - "-l"
-    - "debug"
-    - "-c"
-    - "/config/opa.yaml"
-    - "--addr"
-    - "0.0.0.0:8181"
-  extraVolumes:
-    - name: opa-config
-      configMap:
-        name: opa-config
-  volumeMounts:
-    - name: opa-config
-      mountPath: /config
+  enabled: true
+  fullname: opa
+  
+  # Setup the webhook using cert-manager
+  certManager:
+    enabled: false
+  authz:
+  # Disable if you don't want authorization.
+  # Mostly useful for debugging.
+    enabled: false
 
-  # -- address of the pap to get the policies from
-  config:
-    debug: true
-    default_decision: /policy/main/deny
-    resourceUrl: http://odrl-pap.provider.svc.cluster.local:8080/bundles/service/v1
-    # -- port to make opa available at
-    port: 8181
-    diagnostic_port: 8282
-    # -- pull delays for the policies bundle
-    policies:
-      minDelay: 2
-      maxDelay: 4
-    # -- pull delays for the methods bundle
-    methods:
-      minDelay: 1
-      maxDelay: 3
-    # -- pull delays for the data bundle
-    data:
-      minDelay: 1
-      maxDelay: 15
+  # Docker image and tag to deploy.
+  image: openpolicyagent/opa
+  imageTag: 0.69.0
+  # imagePullPolicy: IfNotPresent
+
+  # Port to which the opa pod will bind itself
+  # NOTE IF you use a different port make sure it maches the ones in the readinessProbe
+  # and livenessProbe
+  port: 8181
+  diagnostic_port: 8282
+
+  log_level: info
+  log_format: text
+  mgmt:
+    enabled: false
+
+  # Log level for OPA ('debug', 'info', 'error') (app default=info)
+  logLevel: info
+
+  # Log format for OPA ('text', 'json') (app default=text)
+  logFormat: text
+
+  rbac:
+    # If true, create & use RBAC resources
+    #
+    create: false
+
+  serviceAccount:
+    # Specifies whether a ServiceAccount should be created
+    create: false
+
+  # This proxy allows opa to make Kubernetes SubjectAccessReview checks against the
+  # Kubernetes API. You can get a rego function at github.com/open-policy-agent/library
+  sar:
+    enabled: false
+
+  # To control the liveness and readiness probes change the fields below.
+  # initialDelaySeconds: 3
+  # periodSeconds: 5
+  readinessProbe:
+    httpGet:
+      path: /
+      scheme: HTTPS
+      port: 8181
+  livenessProbe:
+    # initialDelaySeconds: 3
+    # periodSeconds: 5
+    httpGet:
+      path: /
+      scheme: HTTPS
+      port: 8181
+  opa:
+    # server:
+    #   status: false   # Disable server status reporting
+    services:
+      - name: pap_server
+        url: http://odrl-pap.provider.svc.cluster.local:8080/bundles/service/v1
+    bundles:
+      policies:
+          service: pap_server
+          resource: policies.tar.gz
+          polling:
+            min_delay_seconds: 120
+            max_delay_seconds: 240
+      methods:
+          service: pap_server
+          resource: methods.tar.gz
+          polling:
+            min_delay_seconds: 110
+            max_delay_seconds: 230
+      data:
+          service: pap_server
+          resource: data.tar.gz
+          polling:
+            min_delay_seconds: 100
+            max_delay_seconds: 220
+    # default_decision: /policy/main/allow
+    decision_logs: 
+      console: true 
+    status: 
+      console: true
+  ingress:
+    enabled: false
+    tls:
+      # []
+      - hosts: [ fdsc-provider-opa.local ]
+        secretName: secret.ita.es-tls
+    hosts: 
+      # []
+      ## provide a hosts and the paths that should be available   
+      - host: fdsc-provider-opa.local
+        path: /
+        port: 8181

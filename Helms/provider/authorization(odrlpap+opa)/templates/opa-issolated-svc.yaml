@@ -1,0 +1,19 @@
+{{- if ((.Values.opa).enabled) }}
+apiVersion: v1
+kind: Service
+metadata: 
+  name: {{ .Values.opa.fullname }}
+  namespace: {{ $.Release.Namespace | quote }}
+  labels:
+    app: opa
+spec:
+  ports:
+    - name: grpc
+      port: 9191
+    - name: opa-port
+      port: {{ default "8181" $.Values.opa.port }}
+    - name: opa-diagnostic-port
+      port: {{ default "8282" $.Values.opa.diagnostic_port }}
+  selector:
+    app: opa   
+{{- end }}

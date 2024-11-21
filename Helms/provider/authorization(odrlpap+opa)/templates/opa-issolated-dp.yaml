@@ -1,0 +1,51 @@
+# opaEnabled: {{ .Values.opa.enabled }}
+{{- if .Values.opa.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: {{ .Values.opa.fullname }}
+  namespace: {{ $.Release.Namespace | quote }}
+  labels:
+    app: opa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: opa
+  template:
+    metadata:
+      labels:
+        app: opa
+    spec:
+      containers:
+      - name: opa
+        image: {{ printf "%s:%s" (default "openpolicyagent/opa" $.Values.opa.image) (default "0.69.0" $.Values.opa.imageTag) | quote }}
+        imagePullPolicy: {{ default "IfNotPresent" $.Values.opa.imagePullPolicy }}
+        securityContext:
+          runAsUser: 1111
+        volumeMounts:
+          - name: opa-config
+            mountPath: /config
+            readOnly: true
+        # opa should be started to listen at 8181 and get its config from the mounted config yaml
+        args:
+        # args taken from https://www.openpolicyagent.org/docs/latest/cli/
+          - "run"
+          - "--ignore=.*"  # exclude hidden dirs created by Kubernetes
+          - "--server"     # start the runtime in server mode
+          - "--config-file=/config/opa.yaml" # set path of configuration file
+          # --addr= set listening address of the server (e.g., [ip]:<port> for TCP, unix://<path> for UNIX domain socket) (default [:8181])
+          - {{ printf "--addr=0.0.0.0:%d" (default 8181 .Values.opa.port | int ) | quote }}
+          # --diagnostic-addr= set read-only diagnostic listening address of the server for /health and /metric APIs (e.g., [ip]:<port> for TCP, unix://<path> for UNIX domain socket)
+          - {{ printf "--diagnostic-addr=0.0.0.0:%d" (default 8282 .Values.opa.diagnostic_port | int ) | quote }}
+          # --log-format {text,json,json-pretty}   set log format (default json)
+          - {{ printf "--log-format=%s" (default "json-pretty" .Values.opa.log_format ) | quote }}
+          # # --log-level set log level {debug,info,error} (default info)
+          - {{ printf "--log-level=%s" (default "info" .Values.opa.log_level ) | quote }}
+          - "--set=decision_logs.console=true"
+          - "--set=status.console=true"          
+      volumes:
+      - name: opa-config
+        configMap:
+          name: opa-config
+{{- end }}
