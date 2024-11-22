@@ -388,6 +388,7 @@ keycloak:
       }
 
 registration:
+  # Used to register the DID to the different TrustedIssuers 
   enabled: true
   name: registration-job
   job:
@@ -410,12 +411,12 @@ registration:
         did: $DID 
         credentials: 
           - credentialsType: OperatorCredential
-            # validFor:
-            #   from: "2024-07-21T17:32:28Z"
-            #   to: "2040-07-21T17:32:28Z"
-            claims:
-              - name: roles
-                allowedValues: 
-                  - ORDER_PRODUCER
-                  - ORDER_CONSUMER
-                target: $DID
+# validFor:
+#   from: "2024-07-21T17:32:28Z"
+#   to: "2040-07-21T17:32:28Z"
+# claims:
+#   - name: roles
+#     allowedValues: 
+#       - ORDER_PRODUCER
+#       - ORDER_CONSUMER
+#     target: $DID

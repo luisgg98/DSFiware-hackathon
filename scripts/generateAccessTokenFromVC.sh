@@ -155,7 +155,7 @@ if [ "$TEST" == true ]; then
 fi
 [ "$STOP" = true ] && read -p "Press a key to start" || sleep 1;
 
-
+[ "$VERBOSE" = true ] && echo Generating Certificates to sign the Verifiable Presentation
 # Taken from https://github.com/wistefan/did-helper/tree/main
 # Create P-256 Key and Certificate
 # In order to provide a did:key of type P-256, first a key and certificate needs to be created
@@ -172,16 +172,16 @@ openssl pkcs12 -export -inkey $CERT_FOLDER/$PRIVATEKEY_FILE -in $CERT_FOLDER/cer
 sudo chown $(id -u):$(id -g) $CERT_FOLDER -R
 chmod 777 $CERT_FOLDER -R
 
-[ "$STOP" = true ] && read -p "- Certificates to sign the DID generated at '$CERT_FOLDER' folder. Press a key to continue" || sleep 1;
+[ "$VERBOSE" = true ] && echo "- Certificates to sign the DID generated at '$CERT_FOLDER' folder."
+[ "$STOP" = true ] && read -p "Press a key to continue" || sleep 1;
 # check the contents
-keytool -v -keystore $CERT_FOLDER/cert.pfx -list -alias $PFX_ALIAS --storepass hello
+# keytool -v -keystore $CERT_FOLDER/cert.pfx -list -alias $PFX_ALIAS --storepass hello
 docker run -v $CERT_FOLDER:/cert -e STORE_PASS=hello quay.io/wi_stefan/did-helper:0.1.1 2>&1> /dev/null
-[ "$STOP" = true ] && read -p "- DID generated. Press a key to continue" || sleep 1;
 
-MSG="---\n- Retrieve DID as a holder of the Verifiable Presentation"
 CMD="cat $CERT_FOLDER/did.json | jq '.id' -r"
 HOLDER_DID=$(runCommand "$CMD")
-[ "$VERBOSE" = true ]&& echo -e "HOLDER_DID=$HOLDER_DID"
+[ "$VERBOSE" = true ] && echo "- DID [$HOLDER_DID] to sign the Verifiable Presentation generated"
+[ "$STOP" = true ] && read -p "Press a key to continue" || sleep 1;
 
 
 [ "$VERBOSE" = true ]&& echo -e "---\n- Generate a VerifiablePresentation, containing the Verifiable Credential:"
@@ -195,30 +195,30 @@ export VERIFIABLE_PRESENTATION_TEMPLATE="{
     \"holder\": \"${HOLDER_DID}\"
   }"; 
 
-[ "$VERBOSE" = true ]&& echo -e "---\n\t1- Setup the header:"
+[ "$VERBOSE" = true ]&& echo -e "\t1- Setup the header:"
 export JWT_HEADER=$(echo -n "{\"alg\":\"ES256\", \"typ\":\"JWT\", \"kid\":\"${HOLDER_DID}\"}"| base64 -w0 | sed s/\+/-/g | sed 's/\//_/g' | sed -E s/=+$//); 
 [ "$VERBOSE" = true ]&& echo Header: ${JWT_HEADER}
-[ "$VERBOSE" = true ]&& echo -e "---\n\t2- Setup the payload:"
+[ "$VERBOSE" = true ]&& echo -e "\t2- Setup the payload:"
 export PAYLOAD=$(echo -n "{\"iss\": \"${HOLDER_DID}\", \"sub\": \"${HOLDER_DID}\", \"vp\": ${VERIFIABLE_PRESENTATION_TEMPLATE}}" | base64 -w0 | sed s/\+/-/g |sed 's/\//_/g' |  sed -E s/=+$//); 
 [ "$VERBOSE" = true ]&& echo Payload: ${PAYLOAD};   
-[ "$VERBOSE" = true ]&& echo -e "---\n\t3- Create the signature:"
+[ "$VERBOSE" = true ]&& echo -e "\t3- Create the signature:"
 export SIGNATURE=$(echo -n "${JWT_HEADER}.${PAYLOAD}" | openssl dgst -sha256 -binary -sign $CERT_FOLDER/$PRIVATEKEY_FILE | base64 -w0 | sed s/\+/-/g | sed 's/\//_/g' | sed -E s/=+$//); 
 [ "$VERBOSE" = true ]&& echo Signature: ${SIGNATURE}; 
-[ "$VERBOSE" = true ]&& echo -e "---\n\t4- Combine them to generate the JWT:"
+[ "$VERBOSE" = true ]&& echo -e "\t4- Combine them to generate the JWT:"
 export VP_JWT="${JWT_HEADER}.${PAYLOAD}.${SIGNATURE}"; 
 [ "$VERBOSE" = true ]&& echo VP_JWT: ${VP_JWT}
-[ "$VERBOSE" = true ]&& echo -e "---\n\t5- The VP_JWT representation of the VP_JWT has to be Base64-encoded(no padding!) (This is not a JWT):"
+[ "$VERBOSE" = true ]&& echo -e "\t5- The VP_JWT representation of the VP_JWT has to be Base64-encoded(no padding!) (This is not a JWT):"
 export VP_TOKEN=$(echo -n ${VP_JWT} | base64 -w0 | sed s/\+/-/g | sed 's/\//_/g' | sed -E s/=+$//); 
 echo "VP_TOKEN=$VP_TOKEN"
 RECOVERED_JWT=$(echo -n "${VP_TOKEN}" | sed 's/-/+/g' | sed 's/_/\//g' | sed -E 's/.{0,2}$/&==/' | base64 -d)
 echo $RECOVERED_JWT
-MSG="\n---\n- Finally An access token to access the service has to be exchanged by the vp_token"
+MSG="---\nFinally An access token is returned to be used to request the service (This is a JWT)"
 CMD="curl -s -X POST $OIDC_ACCESSTOKEN_URL \
       --header 'Accept: */*' \
       --header 'Content-Type: application/x-www-form-urlencoded' \
       --data grant_type=vp_token \
       --data vp_token=${VP_TOKEN} \
       --data scope=$SCOPE | jq '.access_token' -r";
-echo "Running command [$CMD]"
+# echo "Running command [$CMD]"
 DATA_SERVICE_ACCESS_TOKEN=$(runCommand "$CMD" "$MSG")
-echo -e "DATA_SERVICE_ACCESS_TOKEN=${DATA_SERVICE_ACCESS_TOKEN}"
+echo -e "export DATA_SERVICE_ACCESS_TOKEN=${DATA_SERVICE_ACCESS_TOKEN}"

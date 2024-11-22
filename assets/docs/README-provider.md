@@ -7,7 +7,6 @@
   - [Step 4.4- _Deployment of the service components_](#step-44--deployment-of-the-service-components)
   - [Step 4.5- Addition of the service route to the Apisix without security](#step-45--addition-of-the-service-route-to-the-apisix-without-security)
   - [Step 4.6- Addition of the service route to the Apisix with VC Authentication](#step-46--addition-of-the-service-route-to-the-apisix-with-vc-authentication)
-    - [Generate a VP (Verifiable Presentation) to access the service](#generate-a-vp-verifiable-presentation-to-access-the-service)
   - [Bottom line](#bottom-line)
 
     
@@ -289,13 +288,49 @@ kGet -n service
         <p><em>Powered by <a href="https://apisix.apache.org/">APISIX</a>.</em></p></body>
         </html>
   ```
-### Generate a VP ([Verifiable Presentation](https://wiki.iota.org/identity.rs/explanations/verifiable-presentations/)) to access the service
-  Requests to access the service will require from now on to retrieve a JWT token.
-  This OIDC conversation will use an authentication based on a VC embedded into a VP ([Verifiable Presentation](https://wiki.iota.org/identity.rs/explanations/verifiable-presentations/)) to be sent to the [OIDC-Token endpoint](https://fiwaredsc-provider.ita.es/.well-known/openid-configuration) (_grant_type=vp_token_).  
+
+  Requests to access the service will require from now on the possession of a valid JWT token.
+  The OIDC conversation will require the proper VC to grant access to the service, VC that has to be embedded inside a ([Verifiable Presentation](https://wiki.iota.org/identity.rs/explanations/verifiable-presentations/)).  
+  The OIDC conversation begins at the well known url of the service to be accessed (`https://fiwaredsc-provider.ita.es/.well-known/openid-configuration`). From there, the OIDC-Token endpoint is retrieved (`https://fiwaredsc-provider.ita.es/services/hackathon-service/token`) and the interaction following the rules set for the **_grant_type=vp_token_** to obtain an access token.
   
   The VC to be used is the one generated previously at the section [Issuance of  VCs through a M2M flow (Using API Rest calls)](README-consumer.md#issue-vcs-through-a-m2m-flow-using-api-rest-calls)
 
-  The script [generateVPToken.sh](../../scripts/generateVPToken.sh) will perform these steps.
+  The script [generateAccessTokenFromVC](../../scripts/generateVPToken.sh) will perform this conversation like in the following demo:
+
+  ```shell
+  scripts/generateAccessTokenFromVC.sh $VERIFIABLE_CREDENTIAL 
+      INFO: EXECUTING SCRIPT [scripts/generateAccessTokenFromVC.sh]:
+      VERBOSE=[true]
+      TEST=[false]
+      PAUSE=[false]
+      VERIFIABLE_CREDENTIAL=eyJhbGciOi..WU8xuBWLXA
+      OIDC_URL=https://fiwaredsc-provider.ita.es
+      CERT_FOLDER=./.tmp/VPCerts
+      PRIVATEKEY_FILE=private-key.pem
+      PUBLICKEY_FILE=public-key.pem
+      STOREPASSWORD_LENGTH=128
+      ACCESSTOKEN_SCOPE=operator
+      ---
+      Generating Certificates to sign the Verifiable Presentation
+      - Certificates to sign the DID generated at './.tmp/VPCerts' folder.
+      - DID [did:key:zDnaeSz6xXkTik1dZ2Cw92UjGtMAc84knWJK4ioj1J9u8h5Uq] to sign the Verifiable Presentation generated
+      ---
+      - Generate a VerifiablePresentation, containing the Verifiable Credential:
+              1- Setup the header:
+      Header: eyJhb...
+      ---
+              2- Setup the payload:
+      Payload: eyJpc3MiOiAiZGlk...
+              3- Create the signature:
+      Signature: MEUCIBdt...
+              4- Combine them to generate the JWT:
+      VP_JWT: eyJhbGciOiJFUz...
+              5- The VP_JWT representation of the VP_JWT has to be Base64-encoded(no padding!) (This is not a JWT):
+      VP_TOKEN=ZXlKaGJHY2lPaUpG...5hffIpsqqYAB8
+      ---
+      - Finally An access token is returned to be used to request the service (This is a JWT)
+      export DATA_SERVICE_ACCESS_TOKEN=eyJhbGciOiJS...rc-L-_w
+  ```
 
 
 

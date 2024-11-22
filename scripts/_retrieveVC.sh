@@ -175,4 +175,4 @@ CMD="curl -s -X POST \"$URL_CREDENTIAL_ENDPOINT\" \
       --header \"Authorization: Bearer ${CREDENTIAL_ACCESS_TOKEN}\" \
   --data \"{\\\"credential_identifier\\\":\\\"$CREDENTIAL_IDENTIFIER\\\", \\\"format\\\":\\\"jwt_vc\\\"}\" | jq '.credential' -r;"
 export VERIFIABLE_CREDENTIAL=$(runCommand "$CMD" "$MSG")
-echo -e "\nVERIFIABLE_CREDENTIAL=$VERIFIABLE_CREDENTIAL"
+echo -e "\n*****\nexport VERIFIABLE_CREDENTIAL=$VERIFIABLE_CREDENTIAL"
