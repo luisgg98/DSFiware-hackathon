@@ -149,9 +149,11 @@ if [ "$VERBOSE" = true ]; then
     echo "OIDC_URL_WELLKNOWN=[$OIDC_URL_WELLKNOWN]"
     echo "OIDC_ACCESSTOKEN_URL=[$OIDC_ACCESSTOKEN_URL]"
     echo '---'
-    [ "$STOP" = true ] && read -p "Press a key to start" || sleep 1;
 fi
-[ "$TEST" == true ]&&[ "$CALLMODE" == "executed" ] && exit -1 || return -1;
+if [ "$TEST" == true ]; then
+    [ "$CALLMODE" == "executed" ] && exit -1 || return -1;
+fi
+[ "$STOP" = true ] && read -p "Press a key to start" || sleep 1;
 
 
 # Taken from https://github.com/wistefan/did-helper/tree/main

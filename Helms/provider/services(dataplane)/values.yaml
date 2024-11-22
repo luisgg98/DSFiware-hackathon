@@ -170,11 +170,11 @@ dataPlaneRegistration:
         trustedParticipantsLists:
           - http://tir.trust-anchor.svc.cluster.local:8080
         trustedIssuersLists:
-          - http://tir.trust-anchor.svc.cluster.local:8080  
+          - http://til.provider.svc.cluster.local:8080  
   otherOidcScopes:
     operator:
       - type: OperatorCredential
         trustedParticipantsLists:
           - http://tir.trust-anchor.svc.cluster.local:8080
         trustedIssuersLists:
-          - http://til.svc.cluster.local:8080
+          - http://til.provider.svc.cluster.local:8080
