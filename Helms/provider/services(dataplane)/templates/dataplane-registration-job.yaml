@@ -1,0 +1,49 @@
+{{- if (.Values.dataPlaneRegistration).enabled }}
+{{- $jobName := printf "%s-job" (include "dataplane-registration.configmap.name" .) }}
+{{- $backoffLimit := default 1 (.Values.dataPlaneRegistration.job).backoffLimit }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $jobName }}
+  namespace: {{ $.Release.Namespace | quote }}
+  annotations:
+    {{/* # "helm.sh/hook": {{ default "post-install,post-upgrade" .Values.dataPlaneRegistration.job.hook }} */}}
+    "helm.sh/hook-delete-policy": {{ default "before-hook-creation" (.Values.dataPlaneRegistration.job).hookDeletePolicy }}
+    "helm.sh/hook-weight": "1"
+spec:
+  ttlSecondsAfterFinished: 30
+  backoffLimit: {{ $backoffLimit }}
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: {{ $jobName }}
+          image: alpine/curl
+          command:
+          - /bin/sh
+          - -ec
+          - |
+            {{ $CCSERVICE := printf "%s/service" .Values.dataPlaneRegistration.endpoint }}
+            echo "# credentials config service registration at {{ $CCSERVICE -}}"
+
+            curl -X 'POST' \
+              ' {{- $CCSERVICE -}}' \
+              -H 'accept: */*' \
+              -H 'Content-Type: application/json' \
+              -d '{
+              "id": {{ .Values.dataPlaneRegistration.id | quote }},
+              "defaultOidcScope": {{ .Values.dataPlaneRegistration.defaultOidcScope.name | quote }},      
+              {{- if or .Values.dataPlaneRegistration.defaultOidcScope.oidcScope .Values.dataPlaneRegistration.otherOidcScopes }}
+              "oidcScopes": 
+              {{- if .Values.dataPlaneRegistration.defaultOidcScope.oidcScope }}
+              {
+                {{ .Values.dataPlaneRegistration.defaultOidcScope.name | quote }}: [
+                {{- .Values.dataPlaneRegistration.defaultOidcScope.oidcScope | toJson -}}],
+              {{- end -}}
+              {{- if .Values.dataPlaneRegistration.otherOidcScopes }}      
+              {{- $otherOidcScopes := .Values.dataPlaneRegistration.otherOidcScopes | toJson }}
+              {{- trimPrefix "{" $otherOidcScopes | nindent 16 }}
+              {{- end }}
+              {{- end }}
+            }'
+{{- end }}

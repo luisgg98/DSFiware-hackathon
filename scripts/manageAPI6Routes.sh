@@ -122,8 +122,46 @@ ROUTE_WALLET_fiwaredsc_wallet_ita_es='{
   "status": 1
 }' 
 
+# https://fiwaredsc-provider.ita.es/.well-known/openid-configuration
+# https://fiwaredsc-provider.ita.es/.well-known/jwks
+ROUTE_OIDC_fiwaredsc_vcverifier_ita_es='{
+  "uri": "/.well-known/*",
+  "name": "OIDC",
+  "host": "fiwaredsc-provider.ita.es",
+  "methods": ["GET"],
+  "upstream": {
+    "type": "roundrobin",
+    "nodes": {
+      "verifier.provider.svc.cluster.local:3000": 1
+    }
+  },
+  "plugins": {
+      "proxy-rewrite": {
+          "regex_uri": ["^/.well-known/(.*)", "/services/hackathon-service/.well-known/$1"]
+      }
+  }
+}'
+# https://fiwaredsc-provider.ita.es/services/hackathon-service/token
+ROUTE_OIDC_TOKEN_fiwaredsc_vcverifier_ita_es='{
+  "uri": "/services/hackathon-service/token",
+  "name": "OIDC-Token",
+  "host": "fiwaredsc-provider.ita.es",
+  "methods": ["GET", "POST"],
+  "upstream": {
+    "type": "roundrobin",
+    "nodes": {
+      "verifier.provider.svc.cluster.local:3000": 1
+    }
+  },
+  "plugins": {
+      "proxy-rewrite": {
+          "uri": "/services/hackathon-service/token"
+      }
+  }
+}'
+
 # https://fiwaredsc-provider.ita.es/ngsi-ld/
-ROUTE_PROVIDER_SERVICE_fiwaredsc_provider_ita_es='{
+ROUTE_PROVIDER_SERVICE_fiwaredsc_providerWithoutAutho_ita_es='{
   "uri": "/ngsi-ld/*",
   "name": "service",
   "host": "fiwaredsc-provider.ita.es",
@@ -141,10 +179,43 @@ ROUTE_PROVIDER_SERVICE_fiwaredsc_provider_ita_es='{
     }
   }
 }'
-
+# https://fiwaredsc-provider.ita.es/ngsi-ld/
+ROUTE_PROVIDER_SERVICE_fiwaredsc_provider_ita_es='{
+  "uri": "/ngsi-ld/*",
+  "name": "service",
+  "host": "fiwaredsc-provider.ita.es",
+  "methods": ["GET", "POST", "PUT", "HEAD", "CONNECT", "OPTIONS", "PATCH", "DELETE"],
+  "upstream": {
+    "type": "roundrobin",
+    "scheme": "http",
+    "nodes": {
+      "ds-scorpio.service.svc.cluster.local:9090": 1
+    }
+  },
+  "plugins": {
+    "proxy-rewrite": {
+        "regex_uri": ["^/ngsi-ld/(.*)", "/ngsi-ld/$1"]
+    },
+    "openid-connect": {
+        # https://apisix.apache.org/docs/apisix/plugins/openid-connect/
+        "bearer_only": "true",
+        "use_jwks": "true",
+        "client_id": "hackathon-service",
+        "client_secret": "unused",
+        "ssl_verify": "false",
+        "discovery": "http://verifier.provider.svc.cluster.local:3000/services/hackathon-service/.well-known/openid-configuration"    
+      }
+  }
+}'
 ## management area
 # curl -i -X POST -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN" \
 # -d "$ROUTE_PROVIDER_SERVICE_fiwaredsc_provider_ita_es"
+curl -i -X POST -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN" \
+-d "$ROUTE_OIDC_TOKEN_fiwaredsc_vcverifier_ita_es"
+# curl -i -X POST -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN" \
+# -d "$ROUTE_OIDC_fiwaredsc_vcverifier_ita_es"
+# curl -i -X POST -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN" \
+# -d "$ROUTE_PROVIDER_SERVICE_fiwaredsc_providerWithoutAutho_ita_es"
 # curl -i -X POST -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN" \
 # -d "$ROUTE_WALLET_fiwaredsc_wallet_ita_es"# curl -i -X POST -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN" \
 # -d "$ROUTE_CONSUMER_KEYCLOAK_fiwaredsc_consumer_ita_es"
@@ -161,16 +232,14 @@ ROUTE_PROVIDER_SERVICE_fiwaredsc_provider_ita_es='{
 #                     "plugins":{"proxy-rewrite":{"uri":"/","use_real_request_uri_unsafe":false}},
 #                     "update_time":1731400093,"id":"00000000000000000077","priority":0}}
 
-# Test new route
-# curl -k https://fiwaredsc-consumer.local/hello
+# # Get routes
+# curl -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN"
 
 # Fix the route
-curl -i -X PUT -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes/00000000000000000269 \
-    -H "X-API-KEY:$ADMINTOKEN" \
-    -d "$ROUTE_PROVIDER_SERVICE_fiwaredsc_provider_ita_es"
-
-# Get routes
-# curl -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes -H "X-API-KEY:$ADMINTOKEN"
+# ROUTE_ID=00000000000000000281
+# curl -i -X PUT -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes/$ROUTE_ID \
+#     -H "X-API-KEY:$ADMINTOKEN" \
+#     -d "$ROUTE_OIDC_fiwaredsc_vcverifier_ita_es"
 
 # Detele a route
 # curl -i -X DELETE -k -H "X-API-KEY:$ADMINTOKEN" https://$IP_APISIXCONTROL:9180/apisix/admin/routes/00000000000000000244

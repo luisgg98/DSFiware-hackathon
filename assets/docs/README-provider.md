@@ -5,7 +5,9 @@
     - [Verification of the deployment so far](#verification-of-the-deployment-so-far)
   - [Step4.3- _Deployment of the authorization components_](#step43--deployment-of-the-authorization-components)
   - [Step 4.4- _Deployment of the service components_](#step-44--deployment-of-the-service-components)
-  - [Step 4.5- Addition of the service route to the Apisix](#step-45--addition-of-the-service-route-to-the-apisix)
+  - [Step 4.5- Addition of the service route to the Apisix without security](#step-45--addition-of-the-service-route-to-the-apisix-without-security)
+  - [Step 4.6- Addition of the service route to the Apisix with VC Authentication](#step-46--addition-of-the-service-route-to-the-apisix-with-vc-authentication)
+    - [Generate a VP (Verifiable Presentation) to access the service](#generate-a-vp-verifiable-presentation-to-access-the-service)
   - [Bottom line](#bottom-line)
 
     
@@ -50,7 +52,7 @@ This Helm chart contains the following components:
 - A MySql DB server to provide storage to the _Fiware Trusted Issuer List_ and the _Credential Config Service_ as shown in the diagram.
 - [Fiware Trusted Issuers List](https://github.com/FIWARE/trusted-issuers-list), It is the same component than the _Fiware Trusted Issuers List_ deployed at the trustAnchor. It plays the role of providing a [Trusted Issuers List API](https://github.com/FIWARE/trusted-issuers-list/blob/main/api/trusted-issuers-list.yaml) to manage the issuers in the provider.
 - A [Credential Config Service](https://github.com/FIWARE/credentials-config-service): This service manages the Trusted issuer registries and the Trusted issuer local registries to be used to permorm the credential authentication. It enables the support the use of multiple trust anchors.
-- A [VCVerifier](https://github.com/FIWARE/VCVerifier) that provides the necessary endpoints(see [API](https://github.com/FIWARE/VCVerifier/blob/main/api/api.yaml)) to offer [SIOP-2](https://openid.net/specs/openid-connect-self-issued-v2-1_0.html#name-cross-device-self-issued-op)/[OIDC4VP](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html#request_scope) compliant authentication flows. It exchanges VerfiableCredentials for JWT, that can be used for authorization and authentication in down-stream components.
+- A [VCVerifier](https://github.com/FIWARE/VCVerifier) that provides the necessary endpoints(see [API](https://github.com/FIWARE/VCVerifier/blob/main/api/api.yaml)) to offer [SIOP-2](https://openid.net/specs/openid-connect-self-issued-v2-1_0.html#name-cross-device-self-issued-op)/[OIDC4VP](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html#request_scope) compliant authentication flows to request and present VC credentials as an extension to the well-established [OpenID Connect](https://openid.net/connect/). It exchanges VerfiableCredentials for JWT, that can be used for authorization and authentication in down-stream components.
 
 ```shell
 hFileCommand provider/authentication
@@ -68,6 +70,9 @@ kGet -w
     verifier-64965b55f9-qktrq         1/1     Running   0             67s
 ```
 
+The VCVerifier's routes endpoints have to be exposed at the apisix to enable the OIDC protocol with clients. 
+The endpoint will be `https://fiwaredsc-provider.ita.es/.well-known/openid-configuration` and as the dns is already registered at the Apisix, only the new routes have to be added to the apisix data plane, using the same steps that in previous additions using one of the manageAPI6Routes options (script of jupyterhub).
+
 ### Verification of the deployment so far
 Besides checking that the pods have been properly deployed, a number of curl requests can be made to verfy the set:
 ```json
@@ -84,6 +89,36 @@ kExec net -- curl http://cconfig:8080/service
 # Checks the verifier
 kExec net --curl http://verifier:3000/health
   {"status":"OK","component":{"name":"vcverifier","version":"" } }
+
+# Checks the well known OpenID endpoint
+kExec net -- curl https://fiwaredsc-provider.ita.es/.well-known/openid-configuration
+    {
+      "issuer": "http://fiwaredsc-provider.ita.es",
+      "authorization_endpoint": "http://fiwaredsc-provider.ita.es",
+      "token_endpoint": "http://fiwaredsc-provider.ita.es/services/hackathon-service/token",
+      "jwks_uri": "http://fiwaredsc-provider.ita.es/.well-known/jwks",
+      "scopes_supported": [
+          "default",
+          "operator"
+      ],
+      "response_types_supported": [
+          "token"
+      ],
+      "response_mode_supported": [
+          "direct_post"
+      ],
+      "grant_types_supported": [
+          "authorization_code",
+          "vp_token"
+      ],
+      "subject_types_supported": [
+          "public"
+      ],
+      "id_token_signing_alg_values_supported": [
+          "EdDSA",
+          "ES256"
+      ]
+    }
 ```
     
 ## Step4.3- _Deployment of the authorization components_
@@ -151,17 +186,18 @@ kGet -n service
     postgis-0                     1/1     Running     0          23m
 ```
 
-## Step 4.5- Addition of the service route to the Apisix
+## Step 4.5- Addition of the service route to the Apisix without security
 1. Initially, we are going to modify the apisix values file to enable its management of the new route `fiwaredsc-provider.ita.es` and _upgrade_ the apisix helm chart to just renew the involved components (_apisix-control-plane_)
     ```shell
     hFileCommand api upgrade
       # Running CMD=[helm -n apisix upgrade -f "./Helms/apisix/values.yaml" apisix "./Helms/apisix/"  --create-namespace]
     ```
 2. Add a new route to the service
-   We are going to redirect the requests to https://fiwaredsc-consumer.ita.es to the scorpio context broker
+   **NOTE**: This configuration exposes the service without any authentication nor authorization process. It is just created just for testing and should be replaced as soon as possible by the route managed by the Data Space Connector.  
+   We are going to redirect the requests to https://fiwaredsc-consumer.ita.es/ngsi-ld/* to the scorpio context broker
     ```json
     # https://fiwaredsc-provider.ita.es/ngsi-ld/...
-    ROUTE_PROVIDER_SERVICE_fiwaredsc_provider_ita_es='{
+    ROUTE_PROVIDER_SERVICE_fiwaredsc_providerWithoutAutho_ita_es='{
       "uri": "/ngsi-ld/*",
       "name": "service",
       "host": "fiwaredsc-provider.ita.es",
@@ -191,11 +227,77 @@ kGet -n service
             "type" : "Property",
         ...
     ```
-    The order record shown has been inserted by the job created to initialize the data.
+    **NOTE**: The order record shown has been inserted by the job created to initialize the data.
+
+## Step 4.6- Addition of the service route to the Apisix with VC Authentication    
+  To enable the apisix to play the PEP role, this step is adding a plugin to the NGSI-LD service `fiwaredsc-provider.ita.es/ngsi-ld/` route. The plugin will play the PEP (Policy Enforcment Point) role.  
+     The `ROUTE_PROVIDER_SERVICE_fiwaredsc_provider_ita_es` json contains a new plugins `openid-connect`, an authentication protocol based on the OAuth 2.0 that redirects NGSI-LD requests to the VCVerifier, as it implements the [OIDC4VP](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html#request_scope), it will validate the authenticity of the VC presented. Actually, the VC has to be sent by the client embedded inside a VP ([Verifiable Presentation](https://wiki.iota.org/identity.rs/explanations/verifiable-presentations/)).
+
+```json
+      # https://fiwaredsc-provider.ita.es/ngsi-ld/...
+      ROUTE_PROVIDER_SERVICE_fiwaredsc_provider_ita_es='{
+        "uri": "/ngsi-ld/*",
+        "name": "service",
+        "host": "fiwaredsc-provider.ita.es",
+        "methods": ["GET", "POST", "PUT", "HEAD", "CONNECT", "OPTIONS", "PATCH", "DELETE"],
+        "upstream": {
+          "type": "roundrobin",
+          "scheme": "http",
+          "nodes": {
+            "ds-scorpio.service.svc.cluster.local:9090": 1
+          }
+        },
+        "plugins": {
+          "proxy-rewrite": {
+              "regex_uri": ["^/ngsi-ld/(.*)", "/ngsi-ld/$1"]
+          },
+          "openid-connect": {
+            # https://apisix.apache.org/docs/apisix/plugins/openid-connect/
+            "bearer_only": true
+            "use_jwks": true
+            "client_id": "hackathon-service"
+            "client_secret": "unused"
+            "ssl_verify": "false"
+            "discovery": "http://verifier.provider.svc.cluster.local:3000/services/hackathon-service/.well-known/openid-configuration"    
+          }
+        }
+      }'
+```
     
-  3. Enable the apisix to play the PEP role.
-     Once tested the access of the service *out of the security box the data space provides*, this step is adding a plugin to the service `fiwaredsc-provider.ita.es/ngsi-ld/` route, plugin that will play the PEP (Policy Enforcment Point) role.  
-     Next phase will focus in this objective
+  As the route already exists, it can be updated (you require its internal id) instead of just created as in the previous routes.  
+  Review the manageAPI6Routes script or jupyter files to see how to retrieve it.
+  Once retrieved, using the new ENV VAR `ROUTE_PROVIDER_SERVICE_fiwaredsc_provider_ita_es` run the command:
+
+    ```shell
+    # Update the route
+    ...
+    ROUTE_ID=00000000000000000269
+    curl -i -X PUT -k https://$IP_APISIXCONTROL:9180/apisix/admin/routes/$ROUTE_ID \
+        -H "X-API-KEY:$ADMINTOKEN" \
+        -d "$ROUTE_PROVIDER_SERVICE_fiwaredsc_provider_ita_es"
+    ...
+    ```
+  Again, the same request made to get NGSI-LD data will show a `401 Authorization Required` error
+  ```shell
+    # Test the service
+    curl https://fiwaredsc-provider.ita.es/ngsi-ld/v1/entities?type=Order
+        <html>
+        <head><title>401 Aufthorization Required</title></head>
+        <body>
+        <center><h1>401 Authorization Required</h1></center>
+        <hr><center>openresty</center>
+        <p><em>Powered by <a href="https://apisix.apache.org/">APISIX</a>.</em></p></body>
+        </html>
+  ```
+### Generate a VP ([Verifiable Presentation](https://wiki.iota.org/identity.rs/explanations/verifiable-presentations/)) to access the service
+  Requests to access the service will require from now on to retrieve a JWT token.
+  This OIDC conversation will use an authentication based on a VC embedded into a VP ([Verifiable Presentation](https://wiki.iota.org/identity.rs/explanations/verifiable-presentations/)) to be sent to the [OIDC-Token endpoint](https://fiwaredsc-provider.ita.es/.well-known/openid-configuration) (_grant_type=vp_token_).  
+  
+  The VC to be used is the one generated previously at the section [Issuance of  VCs through a M2M flow (Using API Rest calls)](README-consumer.md#issue-vcs-through-a-m2m-flow-using-api-rest-calls)
+
+  The script [generateVPToken.sh](../../scripts/generateVPToken.sh) will perform these steps.
+
+
 
 ## Bottom line
 The deployment of the provider components and the coordination with the other blocks leaves the data space ready to be setup and used:

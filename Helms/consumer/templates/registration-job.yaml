@@ -1,0 +1,81 @@
+{{- if and (.Values.registration).enabled -}}
+{{- $jobName := default "registration-job"  .Values.registration.name }}
+{{- $backoffLimit := default 100 .Values.registration.job.backoffLimit }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $jobName }}
+  namespace: {{ $.Release.Namespace | quote }}
+  annotations:
+    # "helm.sh/hook": {{ default "post-install,post-upgrade" .Values.registration.job.hook }}
+    "helm.sh/hook-delete-policy": {{ default "before-hook-creation" .Values.registration.job.hookDeletePolicy }}
+    "helm.sh/hook-weight": "1"
+spec:
+  ttlSecondsAfterFinished: 30
+  backoffLimit: {{ $backoffLimit }}
+  template:
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+        - name: get-did
+          image: alpine:latest
+          command:
+            - /bin/sh
+            - -ec
+            - |
+             cd /did-material
+              wget http://did:3000/did-material/did.env
+          
+          volumeMounts:
+          - mountPath: /did-material
+            name: did-material
+      containers:
+        - name: {{ $jobName }}
+          image: alpine/curl
+          env:
+          {{- range .Values.registration.trustedIssuersLists }}
+          - name: ISSUERDETAILS_{{ .name }}
+            value: {{ .issuerDetails | toJson | quote }}
+          {{- end }}
+          command:
+          - /bin/sh
+          - -ec
+          - |
+            source /did-material/did.env
+            {{ range $ti := .Values.registration.trustedIssuersLists }}
+            TIURL={{ $ti.tiURL }}
+            TIURL4ISSUERS=$TIURL/v4/issuers
+            TIURLISSUER=\'$TIURL/issuer\'
+            echo -e "\n---\nTrying to register DID $DID at $TIURL4ISSUERS"
+            for i in $(seq 1 {{ $backoffLimit }}); do
+              CMD="curl -s -o /dev/null -w \"%{http_code}\" $TIURL4ISSUERS"
+              HTTPCODE=$($CMD)
+              HTTPCODE=${HTTPCODE:1:-1}
+              if [ $HTTPCODE = "200" ]; then
+                # echo "Access to Trusted Issuer [$TIURL] seems correct."
+                # echo "Next step, to register at $TIURLISSUER"
+                ISSUERDETAILSJSON=$ISSUERDETAILS_{{ .name }}
+                ISSUERDETAILSJSON="'$ISSUERDETAILSJSON"
+                ISSUERDETAILSJSON="$ISSUERDETAILSJSON'"
+                ISSUERDETAILSJSON=$(echo $ISSUERDETAILSJSON | sed "s|\$DID|$DID|")
+                CMD="curl -sb -X 'POST' $TIURLISSUER \
+                  -H 'accept: */*' \
+                  -H 'Content-Type: application/json' \
+                  -d $ISSUERDETAILSJSON"
+                echo CMD=$CMD
+                eval "$CMD"
+                break;
+              else
+                echo "Sleeping 10s. It seems that I have arrived early -Latest HTTPCODE=$HTTPCODE-"
+                sleep 10;
+              fi
+            done
+
+            {{- end }}
+          volumeMounts:
+          - mountPath: /did-material
+            name: did-material
+      volumes:
+      - name: did-material
+        emptyDir: {}        
+{{- end }}

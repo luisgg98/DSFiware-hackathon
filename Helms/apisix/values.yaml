@@ -74,7 +74,7 @@ apisix:
                   fiwaredsc-trustanchor.local]
           secretName: wildcardlocal-tls
         - hosts: [fiwaredsc-consumer.ita.es,
-                  fiwaredsc-provider.ita.es]
+                  fiwaredsc-consumer.ita.es]
           secretName: ita.es-tls
     extraConfig:
       deployment:

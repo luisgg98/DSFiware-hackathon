@@ -50,11 +50,9 @@ function runCommand() { #CMD, [#Message]
         MSG=$1; shift;
     fi
 
-    echo -e $MSG > /dev/tty;
-     if [ "$VERBOSE" = true ]; then
-        echo -e "Running command [$CMD]" > /dev/tty;
-    fi
     [ "$STOP" = true ] && read -p "Press a key to continue" || sleep 1;
+    [ "$VERBOSE" = true ] && echo -e $MSG > /dev/tty;
+    [ "$VERBOSE" = true ] && echo -e "Running command [$CMD]" > /dev/tty;
     VAR=$(eval $CMD)
     RC=$?
     if test "$RC" -ne 0; then

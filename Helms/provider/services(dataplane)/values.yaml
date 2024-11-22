@@ -69,30 +69,6 @@ scorpio:
     type: ClusterIP
     # port: 4000
   # -- configuration to register the dataplane at the credentials-config-service
-  ccs:
-    defaultOidcScope:
-        name: default
-    # -- endpoint of the ccs to regsiter at
-    endpoint: http://cconfig.provider.svc.cluster.local:8080
-    # -- configmap to get the registration information from
-    configMap: scorpio-registration
-    # -- service id of the data-service to be used
-    id: data-service
-    
-    oidcScopes:
-      default:
-        - type: UserCredential
-          trustedParticipantsLists:
-            - http://tir.trust-anchor.svc.cluster.local:8080
-          trustedIssuersLists:
-            - http://til.provider.svc.cluster.local:8080
-      operator:
-        - type: OperatorCredential
-          trustedParticipantsLists:
-            - http://tir.trust-anchor.svc.cluster.local:8080
-          trustedIssuersLists:
-            - http://trusted-issuers-list.provider.svc.cluster.local:8080
-
 
   # -- additional init containers to be used for the dataplane
   initContainers:
@@ -179,3 +155,26 @@ scorpio:
               "unitCode": "KGM"
             }
           }
+
+dataPlaneRegistration:
+  enabled: true
+  configMapName: data-plane-registration
+  # -- service id of the hackathon-service to be used
+  id: hackathon-service
+  # -- endpoint of the ccs to regsiter at
+  endpoint: http://cconfig.provider.svc.cluster.local:8080
+  defaultOidcScope:
+      name: default
+      oidcScope:
+        type: UserCredential
+        trustedParticipantsLists:
+          - http://tir.trust-anchor.svc.cluster.local:8080
+        trustedIssuersLists:
+          - http://tir.trust-anchor.svc.cluster.local:8080  
+  otherOidcScopes:
+    operator:
+      - type: OperatorCredential
+        trustedParticipantsLists:
+          - http://tir.trust-anchor.svc.cluster.local:8080
+        trustedIssuersLists:
+          - http://til.svc.cluster.local:8080
