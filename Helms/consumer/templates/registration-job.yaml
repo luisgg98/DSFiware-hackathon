@@ -1,6 +1,6 @@
 {{- if and (.Values.registration).enabled -}}
 {{- $jobName := default "registration-job"  .Values.registration.name }}
-{{- $backoffLimit := default 100 .Values.registration.job.backoffLimit }}
+{{- $backoffLimit := default 5 .Values.registration.job.backoffLimit | int }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -46,23 +46,40 @@ spec:
             TIURL={{ $ti.tiURL }}
             TIURL4ISSUERS=$TIURL/v4/issuers
             TIURLISSUER=\'$TIURL/issuer\'
-            echo -e "\n---\nTrying to register DID $DID at $TIURL4ISSUERS"
-            for i in $(seq 1 {{ $backoffLimit }}); do
+            echo -e "\n---\n\t*** Trying to register DID $DID at $TIURL4ISSUERS ***"
+            for i in {{ printf "{1..%d};" $backoffLimit }} do
               CMD="curl -s -o /dev/null -w \"%{http_code}\" $TIURL4ISSUERS"
+              # echo "Running CMD=$CMD"
               HTTPCODE=$($CMD)
               HTTPCODE=${HTTPCODE:1:-1}
               if [ $HTTPCODE = "200" ]; then
-                # echo "Access to Trusted Issuer [$TIURL] seems correct."
-                # echo "Next step, to register at $TIURLISSUER"
+                echo "Access to Trusted Issuer [$TIURL] achieved!"
+                echo "Next step, verify if the ISSUER already exists at the TI list"
                 ISSUERDETAILSJSON=$ISSUERDETAILS_{{ .name }}
+                # echo "ISSUERDETAILSJSON=$ISSUERDETAILSJSON"
                 ISSUERDETAILSJSON="'$ISSUERDETAILSJSON"
                 ISSUERDETAILSJSON="$ISSUERDETAILSJSON'"
-                ISSUERDETAILSJSON=$(echo $ISSUERDETAILSJSON | sed "s|\$DID|$DID|")
-                CMD="curl -sb -X 'POST' $TIURLISSUER \
-                  -H 'accept: */*' \
-                  -H 'Content-Type: application/json' \
-                  -d $ISSUERDETAILSJSON"
-                echo CMD=$CMD
+                ISSUERDETAILSJSON=$(echo $ISSUERDETAILSJSON | sed "s|\$DID|$DID|g")
+                # echo "ISSUERDETAILSJSON=$ISSUERDETAILSJSON"
+                TIURLISSUERDID=$TIURL/issuer/$DID
+                CMD="curl -s -o /dev/null -w \"%{http_code}\" $TIURLISSUERDID"
+                # echo "Running CMD1=$CMD"
+                HTTPCODE=$($CMD)
+                HTTPCODE=${HTTPCODE:1:-1}
+                if [ $HTTPCODE = "200" ]; then
+                  echo "Issuer $DID is already registered"
+                  CMD="curl -X 'PUT' $TIURLISSUERDID \
+                    -H 'accept: */*' \
+                    -H 'Content-Type: application/json' \
+                    -d $ISSUERDETAILSJSON"
+                else
+                  echo "Issier $DID does not exist at the TIList $TIURLISSUER"
+                  CMD="curl -X 'POST' $TIURLISSUER \
+                    -H 'accept: */*' \
+                    -H 'Content-Type: application/json' \
+                    -d $ISSUERDETAILSJSON"
+                fi
+                # echo CMD=$CMD
                 eval "$CMD"
                 break;
               else

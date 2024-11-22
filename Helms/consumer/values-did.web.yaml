@@ -393,29 +393,29 @@ registration:
   job:
     hookDeletePolicy: before-hook-creation
     hook: post-install,post-upgrade
-    backoffLimit: 1000
+    backoffLimit: 10
   trustedIssuersLists:
     # Registers the connector DID:web in the Trusted Issuer Registry of the DS
     # stating that this DID can participate in the DS
-    - name: "tir"
+    - name: tir
       tiURL: http://tir.trust-anchor.svc.cluster.local:8080
       issuerDetails: 
         did: $DID      
         credentials: []
     # Registers the connector DID:web in the Trusted Issuer List of the provider 
     # stating that this DID can access the Provider DSConnector with VC of type OperatorCredential
-    - name: "til"
+    - name: til
       tiURL: http://til.provider.svc.cluster.local:8080
       issuerDetails: 
         did: $DID 
         credentials: 
           - credentialsType: OperatorCredential
-            validFor:
-              from: "2024-07-21T17:32:28Z"
-              to: "2040-07-21T17:32:28Z"
+            # validFor:
+            #   from: "2024-07-21T17:32:28Z"
+            #   to: "2040-07-21T17:32:28Z"
             claims:
-              - name: "roles"
+              - name: roles
                 allowedValues: 
                   - ORDER_PRODUCER
                   - ORDER_CONSUMER
-                # target: "did:web:my-target:did"
+                target: $DID
