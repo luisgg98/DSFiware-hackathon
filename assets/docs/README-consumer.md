@@ -4,6 +4,7 @@
   - [Verifiable Credentials](#verifiable-credentials)
     - [Usage and actors around a VC](#usage-and-actors-around-a-vc)
     - [Benefits of Using DIDs with VCs](#benefits-of-using-dids-with-vcs)
+  - [Infrastructure](#infrastructure)
   - [Step3.1: _Deployment of the DID:key_](#step31-deployment-of-the-didkey)
     - [values-did.key.yaml](#values-didkeyyaml)
     - [values-did.web.yaml](#values-didwebyaml)
@@ -11,7 +12,7 @@
       - [values.did.key.yaml](#valuesdidkeyyaml)
       - [values.did.web.yaml](#valuesdidwebyaml)
   - [Step3.2-Publication of the did:web route](#step32-publication-of-the-didweb-route)
-  - [_Step3.3-Deployment of the Keycloak_](#step33-deployment-of-the-keycloak)
+  - [_Step3.3-Deployment of the VCIssuer (Keycloak)_](#step33-deployment-of-the-vcissuer-keycloak)
     - [Verification](#verification-1)
   - [Step3.4-Publication and first access to the Keycloak route](#step34-publication-and-first-access-to-the-keycloak-route)
     - [Roles](#roles)
@@ -21,8 +22,8 @@
     - [Issue VCs using a browser](#issue-vcs-using-a-browser)
   - [Bottom line](#bottom-line)
 
-Any participant willing to consume services provided by the data space will require a minimum infrastructure that will enable the management of Verifiable Credentials besides a Decentralized Identifier that will constitue the signing mechanism to authenticate any message, any request made by the consumer.   
-This section describes the steps and the components to be deployed.  
+Any participant willing to consume services offered at the data space will require a minimum infrastructure to enable the management of **Verifiable Credentials (VCs)** and a **Decentralized Identifier (DID)** that will be the identity of the consumer used to sign any VC request issued by it made by the consumer.   
+This section describes the components and the steps deploy a consumer's infrastructure.
 
 ## Decentralized Identifiers
 **Decentralized Identifiers (DIDs)** are a new type of digital identifier designed to give users control over their own digital identities. Unlike traditional identifiers like email addresses or usernames, DIDs are decentralized and do not rely on a centralized authority for creation or verification.
@@ -75,6 +76,14 @@ To extend the knowledge of these concepts, the web offers a handful set of resou
 In this phase, setups to deploy both did: `did:key` and `did:web` will be shown. but the fact that the use of a did:web implies the control of a public DNS to publicly expose the well known did:web endpoint for being consumer by any 'verifier' and mainly to route cloud requests to the server bound to the did:web DNS.   
 _eg. to use the `did:web:fiwaredsc-consumer.ita.es`, The [Instituto Tecnológico de Aragón (ITA)](https://www.ita.es/) owner of the `ita.es` domain, must redirect web requests made to https://fiwaredsc-consumer.ita.es to the server in which the DID is exposed at the well known endpoint `https://fiwaredsc-consumer.ita.es/.well-known/did.json`_
 
+
+## Infrastructure
+The following steps describe the different components to be deployed:
+- **Decentralized Identity (DID)**. Steps to deploy both, did:web and did:key will be explained.
+- **Verifiable Credential Issuer**. Values to deploy a functional Keycloak are explained.
+- **Registration mechanism**. This component contains the steps to register a Consumer inside a data space. It does not follow the steps described at the [_Onboarding of an organization in the data space_](https://github.com/FIWARE/data-space-connector?tab=readme-ov-file#onboarding-of-an-organization-in-the-data-space) as it is tailored for demo scenarios and because the interactions with the [GaiaX Clearing Houses (GXDCH)](https://gaia-x.eu/gxdch/) have to be yet fully polished (at the moment this guideline was written).  
+Ths registration is not explained nor deployed at this phase as it requires the whole data space to be in place. It will be explained later at the [initial set up the DS infrastructure](README-initialSetUpOfTheDS.md) phase.
+  
 ## Step3.1: _Deployment of the DID:key_ 
 The consumer Helm Chart provides two value files. One to deploy the DID:key component and another to deploy the DID:web one. To deploy the DID:key run:
 At this first step, only the utils and the did are enabled to trace potential problems.
@@ -224,7 +233,7 @@ To test it is working, browse this URL:
 <p style="text-align:center;font-style:italic;font-size: 75%"><img src="./../images/did-web.json.png"><br/>
     did-web.json exposed at a well known URL</p>
 
-## _Step3.3-Deployment of the Keycloak_
+## _Step3.3-Deployment of the VCIssuer (Keycloak)_
 [Keycloak](https://www.keycloak.org/) is an open source identity and access management solution that on its [release v25](https://www.keycloak.org/docs/latest/release_notes/index.html#openid-for-verifiable-credential-issuance-experimental-support) supports the protocol [OpenID for Verifiable Credential Issuance (OID4VCI) OID4VC](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html) to manage Verifiable Credentials, and so, it can play the role of VCIssuer in the data space architecture.  
 The values of the Keycloak are more complex than previous helms, so it is recomended to analyze them to get familiar with.  
 From now on, this guideline will focus solely in the `values-did.web.yaml`.  

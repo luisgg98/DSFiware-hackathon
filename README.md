@@ -7,6 +7,7 @@ DS infrastructure to be deployed at the 241126-27 Nov Hackathon of Madrid (ITA,C
   - [Deployment of the Verifiable Data Registry components (Trust-Anchor)](#deployment-of-the-verifiable-data-registry-components-trust-anchor)
   - [Consumer's infrastructure](#consumers-infrastructure)
   - [Provider's infrastructure](#providers-infrastructure)
+  - [Initial setup of the Dataspace](#initial-setup-of-the-dataspace)
 
 ## [_Install the tools to ease the life during deployment_](./assets/docs/README-preparationGuide.md)
 This section installs the components to be used during the deployment of the components.  
@@ -32,3 +33,6 @@ Any organization willing to market their data and or services in a dataspace wil
 - The data and or services offered.  
 This section describes the steps and the components to be deployed at the provider's side
 See the [consumer deployment guide](./assets/docs/README-provider.md)
+
+## [Initial setup of the Dataspace](README-initialSetUpOfTheDS.md) 
+This phase will show the actions to register the participants in the dataspace and will continue the configuration to provide authentication and authorization mechanisms to the dataspace to comply with the  [DSBA Technical Convergence recommendations](https://data-spaces-business-alliance.eu/wp-content/uploads/dlm_uploads/Data-Spaces-Business-Alliance-Technical-Convergence-V2.pdf)
