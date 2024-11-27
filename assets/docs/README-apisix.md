@@ -26,10 +26,7 @@ This steps, using the components at the apisix Chart, deploys a basic version of
   ```shell
   kubectl create secret tls wildcardlocal-tls -n apisix --key Helms/apisix/certs/tls-wildcard.key --cert Helms/apisix/certs/tls-wildcard.crt
   ```
-  If the namespace does not exist yet, create it:
-  ```shell
-  kubectl create ns apisix
-  ```
+
 6. Customize the Apisix values file  
 For example, you can start enabling just the utils components activating the enabled flags for utils and deactivating it for the Apisix component  
     ```yaml
@@ -46,7 +43,7 @@ For example, you can start enabling just the utils components activating the ena
 1. Deploy the helm
     ```shell
     hFileCommand apisix install
-    # Will execute helm command: helm -n test install -f "./Helms/apisix/values.yaml" apisix "./Helms/apisix/"  --create-namespace
+    # Will execute helm command: helm -n apisix install -f "./Helms/apisix/values.yaml" apisix "./Helms/apisix/"  --create-namespace
     ```
 2. Test it. Does it work?
     ```shell
