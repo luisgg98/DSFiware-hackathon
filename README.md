@@ -12,9 +12,18 @@ DS infrastructure to be deployed at the 241126-27 Nov Hackathon of Madrid (ITA,C
 
 ## Quick deployment from scratch
 To speed up the deployment, there are two scripts to perform the following actions:
-- [On a Ubuntu machine Install a Microk8s kubernetes cluster](./scripts/installMicrok8s.txt)
-- [Run the commands to deploy the Fiware DS components](./scripts/DSFiwareHackathon-quickinstall.sh)
+- [On a Ubuntu machine Install a Microk8s kubernetes cluster](./scripts/installMicrok8s.rc)
+```shell
+. scripts/installMicrok8s.sh
+# Nevertheless, there are steps that have to be performed manually like editting some files. 
+# Hence, it is better to open the script and follow the instructions
+```
 
+- [Run the commands to deploy the Fiware DS components](./scripts/DSFiwareHackathon-quickinstall.sh)
+```shell
+# Instead of running the script, It is better to open it and follow the instructions
+. scripts/scripts/DSFiwareHackathon-quickinstall.sh
+```
 ## [_Install the tools to ease the life during deployment_](./assets/docs/README-preparationGuide.md)
 This section installs the components to be used during the deployment of the components.  
 See the [Preparation Guide guide](./assets/docs/README-preparationGuide.md)
