@@ -2,12 +2,18 @@
 DS infrastructure to be deployed at the 241126-27 Nov Hackathon of Madrid (ITA,Capillar,UPM,Fiware,Decarbomille)
 
 - [DSFiware-hackathon](#dsfiware-hackathon)
+  - [Quick deployment from scratch](#quick-deployment-from-scratch)
   - [_Install the tools to ease the life during deployment_](#install-the-tools-to-ease-the-life-during-deployment)
   - [Deployment of apisix as proxy](#deployment-of-apisix-as-proxy)
   - [Deployment of the Verifiable Data Registry components (Trust-Anchor)](#deployment-of-the-verifiable-data-registry-components-trust-anchor)
   - [Consumer's infrastructure](#consumers-infrastructure)
   - [Provider's infrastructure](#providers-infrastructure)
   - [Initial setup of the Dataspace](#initial-setup-of-the-dataspace)
+
+## Quick deployment from scratch
+To speed up the deployment, there are two scripts to perform the following actions:
+- [On a Ubuntu machine Install a Microk8s kubernetes cluster](./scripts/installMicrok8s.txt)
+- [Run the commands to deploy the Fiware DS components](./scripts/DSFiwareHackathon-quickinstall.sh)
 
 ## [_Install the tools to ease the life during deployment_](./assets/docs/README-preparationGuide.md)
 This section installs the components to be used during the deployment of the components.  
