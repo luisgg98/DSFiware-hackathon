@@ -14,6 +14,7 @@ microk8s kubectl get all --all-namespaces
 
 # https://discuss.kubernetes.io/t/use-kubectl-with-microk8s/5313/2
 microk8s.kubectl config view --raw > $HOME/.kube/microk8s.config
+microk8s.kubectl config view --raw > $HOME/.kube/config
 # Add next two lines to your ~/.bashrc
 export  KUBECONFIG=$HOME/.kube/config
 export  KUBECONFIG=$KUBECONFIG:$HOME/.kube/microk8s.config

@@ -53,6 +53,13 @@ apisix:
     existingSecretPasswordKey: apisix-dashboard-secret
   #   ## @param dashboard.defaultConfig [string] APISIX Dashboard configuration (evaluated as a template)
   dataPlane:
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        cpu: "1"
+        memory: "1Gi"
     ingress:
       enabled: true
       hostname: fiwaredsc-consumer.local
@@ -111,4 +118,19 @@ apisix:
         mountPath: /usr/local/apisix/apisix/plugins/opa.lua
         subPath: opa.lua
   controlPlane:
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        cpu: "1"
+        memory: "1Gi"
     enabled: true
+    command: ["/bin/sh", "-c"]
+    args:
+      - |
+        if [ -e /usr/local/apisix/logs/worker_events.sock ]; then
+          echo "Socket file exists. Removing socket file."
+          rm -f /usr/local/apisix/logs/worker_events.sock
+        fi
+        exec openresty -p /usr/local/apisix -g "daemon off;"
